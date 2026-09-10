@@ -45,7 +45,7 @@ export async function createLease(data: any) {
 
       await tx.unit.update({
         where: { id: data.unitId },
-        data: { status: "OCCUPIED" },
+        data: { occupancyStatus: "OCCUPIED" },
       });
 
       return newLease;
