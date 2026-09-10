@@ -10,7 +10,8 @@ import {
   WrenchIcon,
   KeyIcon,
   BellIcon,
-  FileBarChartIcon
+  FileBarChartIcon,
+  Building as BuildingIcon
 } from "lucide-react";
 import { TenantProvider } from "@/providers/tenant-provider";
 
