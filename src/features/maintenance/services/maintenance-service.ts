@@ -64,9 +64,9 @@ export class MaintenanceService {
     const ticket = await maintenanceRepository.findById(ticketId, organizationId);
     if (!ticket) throw new Error("Ticket not found");
 
-    const updateData: Prisma.TicketUpdateInput = { status };
-    if (status === TicketStatus.COMPLETED) {
-      updateData.completedAt = new Date();
+    const updateData: Prisma.TicketUncheckedUpdateInput = { status };
+    if (status === TicketStatus.RESOLVED || status === TicketStatus.CLOSED) {
+      updateData.closedAt = new Date();
       if (notes) updateData.completionNotes = notes;
     }
 

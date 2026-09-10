@@ -16,14 +16,14 @@ export class MaintenanceRepository {
     });
   }
 
-  async create(data: Prisma.TicketCreateInput) {
+  async create(data: Prisma.TicketUncheckedCreateInput) {
     return db.ticket.create({
       data,
       include: { attachments: true },
     });
   }
 
-  async update(id: string, organizationId: string, data: Prisma.TicketUpdateInput) {
+  async update(id: string, organizationId: string, data: Prisma.TicketUncheckedUpdateInput) {
     return db.ticket.update({
       where: { id, organizationId },
       data,
@@ -50,10 +50,10 @@ export class MaintenanceRepository {
 
   async getDashboardStats(organizationId: string) {
     const stats = await db.$transaction([
-      db.ticket.count({ where: { organizationId, status: { not: "COMPLETED" } } }),
+      db.ticket.count({ where: { organizationId, status: { notIn: ["RESOLVED", "CLOSED", "ARCHIVED"] } } }),
       db.ticket.count({ where: { organizationId, status: "OPEN" } }),
       db.ticket.count({ where: { organizationId, status: "IN_PROGRESS" } }),
-      db.ticket.count({ where: { organizationId, priority: "URGENT", status: { not: "COMPLETED" } } }),
+      db.ticket.count({ where: { organizationId, priority: "URGENT", status: { notIn: ["RESOLVED", "CLOSED", "ARCHIVED"] } } }),
     ]);
 
     return {

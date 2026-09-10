@@ -12,7 +12,7 @@ export class SubscriptionRepository {
     });
   }
 
-  async update(organizationId: string, data: Prisma.SubscriptionUpdateInput) {
+  async update(organizationId: string, data: Prisma.SubscriptionUncheckedUpdateInput) {
     return db.subscription.update({
       where: { organizationId },
       data,

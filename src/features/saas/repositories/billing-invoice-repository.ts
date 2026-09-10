@@ -23,7 +23,7 @@ export class BillingInvoiceRepository {
     });
   }
 
-  async create(data: Prisma.BillingInvoiceCreateInput) {
+  async create(data: Prisma.BillingInvoiceUncheckedCreateInput) {
     return db.billingInvoice.create({ data });
   }
 

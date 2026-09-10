@@ -38,7 +38,7 @@ export class OwnerStatementService {
       status: "PUBLISHED",
     };
 
-    const lineItems: Prisma.OwnerStatementLineCreateManyInput[] = [
+    const lineItems: any[] = [
       {
         date: new Date(),
         description: "Rent Collection",

@@ -254,11 +254,11 @@ export class LandlordDashboardRepository {
     const unreadMessages = await db.conversationParticipant.count({
       where: {
         userId,
-        conversation: { organizationId },
         conversation: {
+          organizationId,
           messages: {
             some: {
-              createdAt: { gt: db.conversationParticipant.fields.lastReadAt }
+              createdAt: { gt: (db.conversationParticipant.fields.lastReadAt as any) }
             }
           }
         }

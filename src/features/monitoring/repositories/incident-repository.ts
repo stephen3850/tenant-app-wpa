@@ -28,7 +28,7 @@ export class IncidentRepository {
     });
   }
 
-  async createIncident(data: Prisma.PlatformIncidentCreateInput) {
+  async createIncident(data: Prisma.PlatformIncidentUncheckedCreateInput) {
     return systemDb.platformIncident.create({ data });
   }
 

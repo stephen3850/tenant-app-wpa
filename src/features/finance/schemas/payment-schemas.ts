@@ -8,6 +8,7 @@ export const RecordPaymentSchema = z.object({
   method: z.nativeEnum(PaymentMethod),
   transactionRef: z.string().optional(),
   paymentDate: z.date().optional(),
+  autoAllocate: z.boolean().optional(),
   notes: z.string().optional(),
 });
 

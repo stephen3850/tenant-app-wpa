@@ -75,7 +75,7 @@ export class AggregationService {
       for (const org of orgs) {
           // Count active units
           const activeUnits = await db.unit.count({
-              where: { organizationId: org.id, status: "ACTIVE" }
+              where: { property: { organizationId: org.id }, status: "ACTIVE" }
           });
 
           await db.usageMetric.create({

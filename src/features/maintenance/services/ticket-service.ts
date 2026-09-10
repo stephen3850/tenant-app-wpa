@@ -55,7 +55,7 @@ export class TicketService {
 
     return db.ticket.update({
       where: { id, organizationId: user.organizationId },
-      data: { status },
+      data: { status: status as any },
     });
   }
 }

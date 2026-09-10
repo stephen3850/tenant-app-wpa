@@ -5,7 +5,6 @@ export class SupportArticleRepository {
   async findMany(organizationId: string, filters: { categoryId?: string; status?: SupportArticleStatus; search?: string }) {
     const where: Prisma.SupportArticleWhereInput = {
       organizationId,
-      deletedAt: null as any, // If I had deletedAt, but I don't in schema yet, let's stick to status
     };
 
     if (filters.categoryId) {

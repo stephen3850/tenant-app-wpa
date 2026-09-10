@@ -32,21 +32,17 @@ export class OwnerStatementRepository {
     });
   }
 
-  async createStatement(data: Prisma.OwnerStatementUncheckedCreateInput, lineItems: Prisma.OwnerStatementLineCreateManyInput[]) {
-    return this.db.$transaction(async (tx) => {
-      const statement = await tx.ownerStatement.create({
-        data,
-      });
+  async createStatement(data: Prisma.OwnerStatementUncheckedCreateInput, lineItems: any[]) {
+    const statement = await this.db.ownerStatement.create({ data });
 
-      await tx.ownerStatementLine.createMany({
-        data: lineItems.map((line) => ({
-          ...line,
-          ownerStatementId: statement.id,
-        })),
-      });
-
-      return statement;
+    await this.db.ownerStatementLine.createMany({
+      data: lineItems.map((line) => ({
+        ...line,
+        ownerStatementId: statement.id,
+      })),
     });
+
+    return statement;
   }
 
   async updateStatement(id: string, data: Prisma.OwnerStatementUncheckedUpdateInput) {

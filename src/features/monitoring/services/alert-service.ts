@@ -23,7 +23,7 @@ export class AlertService {
    */
   static async triggerMpesaFailureAlert(organizationId: string, error: any) {
     const message = `CRITICAL M-PESA FAILURE: Org ${organizationId}`;
-    Logger.error(message, error, null, "MPESA");
+    Logger.error(message, error, undefined, "MPESA");
 
     Sentry.captureException(error, {
       tags: { organizationId, alertType: "MPESA_FAILURE" }

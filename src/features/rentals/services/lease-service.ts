@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/permissions";
 import { createAuditLog } from "@/lib/audit";
+import { Prisma } from "@prisma/client";
 
 export class LeaseService {
   private async getOrgContext() {
@@ -23,10 +24,20 @@ export class LeaseService {
 
     // Use transaction to create lease and update unit status
     return await db.$transaction(async (tx) => {
+      const unit = await tx.unit.findUnique({ where: { id: data.unitId } });
+      if (!unit) throw new Error("Unit not found");
+
       const lease = await tx.lease.create({
         data: {
-          ...data,
+          leaseNumber: `LSE-${Date.now()}`,
           organizationId,
+          propertyId: unit.propertyId,
+          unitId: data.unitId,
+          tenantId: data.tenantId,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          monthlyRent: new Prisma.Decimal(data.rentAmount),
+          securityDeposit: new Prisma.Decimal(data.depositAmount),
           status: "ACTIVE",
         },
       });

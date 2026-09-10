@@ -113,7 +113,7 @@ export function UnitForm({ properties, initialData, onSubmit, isLoading }: UnitF
               <FormItem>
                 <FormLabel>Block</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Block A" {...field} />
+                  <Input placeholder="e.g. Block A" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,7 +126,7 @@ export function UnitForm({ properties, initialData, onSubmit, isLoading }: UnitF
               <FormItem>
                 <FormLabel>Floor</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 1st Floor" {...field} />
+                  <Input placeholder="e.g. 1st Floor" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -142,7 +142,7 @@ export function UnitForm({ properties, initialData, onSubmit, isLoading }: UnitF
               <FormItem>
                 <FormLabel>Monthly Rent</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="number" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -155,7 +155,7 @@ export function UnitForm({ properties, initialData, onSubmit, isLoading }: UnitF
               <FormItem>
                 <FormLabel>Security Deposit</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="number" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -168,7 +168,7 @@ export function UnitForm({ properties, initialData, onSubmit, isLoading }: UnitF
               <FormItem>
                 <FormLabel>Service Charge</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="number" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

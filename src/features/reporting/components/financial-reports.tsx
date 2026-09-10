@@ -22,7 +22,7 @@ export function FinancialReports() {
     toast.promise(
       // Example for Income Statement
       id === "income_statement"
-        ? getIncomeStatement(new Date(new Date().getFullYear(), 0, 1), new Date())
+        ? (getIncomeStatement(new Date(new Date().getFullYear(), 0, 1), new Date()) as Promise<any>)
         : Promise.resolve(),
       {
         loading: `Generating ${id.replace("_", " ")}...`,

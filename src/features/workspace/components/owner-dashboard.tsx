@@ -72,7 +72,7 @@ export function OwnerDashboard({ permissions }: { permissions: string[] }) {
   }, []);
 
   if (isLoading) return <DashboardSkeleton />;
-  if (error) return <Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>;
+  if (error) return <Alert className="border-red-200 bg-red-50 text-red-900"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>;
 
   if (data.stats.propertyCount === 0 || data.stats.unitCount === 0 || data.stats.tenantCount === 0) {
     return <FoundationDashboard data={data} />;

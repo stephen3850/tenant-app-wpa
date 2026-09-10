@@ -45,7 +45,7 @@ export class TenantPaymentService {
       phoneNumber: formattedPhone,
       tenantId: tenant.id,
       accountReference: tenant.tenantCode || tenant.id.slice(0, 8),
-      invoiceId // Optional: can be used in callback to allocate specifically
+      invoiceIds: invoiceId ? [invoiceId] : undefined // Passed as array
     });
 
     await createAuditLog({

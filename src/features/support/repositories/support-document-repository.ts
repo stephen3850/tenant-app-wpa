@@ -35,7 +35,7 @@ export class SupportDocumentRepository {
   async logDownload(documentId: string, userId: string) {
     return db.downloadLog.create({
       data: {
-        documentId,
+        supportDocumentId: documentId,
         userId,
       }
     });

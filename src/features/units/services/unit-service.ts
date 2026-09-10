@@ -83,32 +83,6 @@ export class UnitService {
     return unit;
   }
 
-  async bulkCreateUnits(propertyId: string, units: any[]) {
-    const user = await this.getSession();
-    await checkPermission("create", "unit");
-
-    const formattedUnits = units.map(u => ({
-      ...u,
-      propertyId,
-      monthlyRent: new Prisma.Decimal(u.monthlyRent || 0),
-      securityDeposit: new Prisma.Decimal(u.securityDeposit || 0),
-      serviceCharge: new Prisma.Decimal(u.serviceCharge || 0),
-      status: UnitStatus.ACTIVE,
-      occupancyStatus: OccupancyStatus.VACANT,
-    }));
-
-    const result = await unitRepository.createMany(formattedUnits);
-
-    await createAuditLog({
-      action: "BULK_CREATE",
-      entity: "Unit",
-      entityId: propertyId,
-      newData: { count: result.count, units: formattedUnits },
-    });
-
-    return result;
-  }
-
   async updateUnit(id: string, values: Partial<UnitFormValues>) {
     const user = await this.getSession();
     await checkPermission("update", "unit");

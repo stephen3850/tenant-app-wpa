@@ -11,7 +11,7 @@ export class VisitorService {
     const session = await auth();
     const organizationId = (session?.user as any).organizationId;
 
-    return db.visitorLog.create({
+    return db.securityVisitor.create({
       data: {
         ...data,
         organizationId,
@@ -20,9 +20,9 @@ export class VisitorService {
   }
 
   async logExit(id: string) {
-    return db.visitorLog.update({
+    return db.securityVisitor.update({
       where: { id },
-      data: { exitTime: new Date() },
+      data: { checkOutTime: new Date() },
     });
   }
 
@@ -30,9 +30,9 @@ export class VisitorService {
     const session = await auth();
     const organizationId = (session?.user as any).organizationId;
 
-    return db.visitorLog.findMany({
+    return db.securityVisitor.findMany({
       where: { organizationId },
-      orderBy: { entryTime: "desc" },
+      orderBy: { checkInTime: "desc" },
     });
   }
 }

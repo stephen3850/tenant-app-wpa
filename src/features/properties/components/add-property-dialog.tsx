@@ -115,13 +115,13 @@ export function AddPropertyDialog({ open, onOpenChange }: AddPropertyDialogProps
         featuredImage: imageUrl,
       });
 
-      if (result.success && result.data) {
+      if ('success' in result && result.success && result.data) {
         toast.success("Property created successfully");
         onOpenChange(false);
         // Redirect to the property detail page
         router.push(`/properties/${result.data.id}?new=true`);
       } else {
-        toast.error(result.error || "Failed to create property");
+        toast.error((result as any).error || "Failed to create property");
       }
     } catch (error) {
       toast.error("An error occurred while saving");

@@ -137,7 +137,7 @@ export class WorkspaceService {
 
     // Process Trend Data
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const last6Months = [];
+    const last6Months: any[] = [];
     for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         last6Months.push({
