@@ -160,7 +160,6 @@ export default async function AuditLogsPage() {
               <TableHead className="text-[11px] font-bold text-[#667085] uppercase tracking-wider px-4">Model</TableHead>
               <TableHead className="text-[11px] font-bold text-[#667085] uppercase tracking-wider px-4">Record</TableHead>
               <TableHead className="text-[11px] font-bold text-[#667085] uppercase tracking-wider px-4">Changes</TableHead>
-              <TableHead className="text-[11px] font-bold text-[#667085] uppercase tracking-wider px-6 text-right">Route</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -200,11 +199,6 @@ export default async function AuditLogsPage() {
                   <TableCell className="px-4 py-3 max-w-[200px]">
                     <span className="text-[10px] text-[#667085] truncate block">
                       {log.action === "UPDATE" ? "Modified fields..." : `New ${log.entity} created`}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-6 py-3 text-right">
-                    <span className="text-[10px] text-[#98A2B3] font-medium italic">
-                      {log.route || "/dashboard"}
                     </span>
                   </TableCell>
                 </TableRow>

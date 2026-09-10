@@ -1,5 +1,6 @@
 import { getUnits, getUnitStats } from "@/features/units/actions/unit-actions";
 import { getProperties } from "@/actions/property-actions";
+import { redirect } from "next/navigation";
 // Refreshing imports
 import { auth } from "@/auth";
 import { UnitHeader } from "@/features/units/components/unit-header";
