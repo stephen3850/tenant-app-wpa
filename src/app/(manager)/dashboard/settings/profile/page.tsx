@@ -9,6 +9,10 @@ import { Mail, Phone, Calendar, ShieldCheck, User as UserIcon, Building } from "
 export default async function ProfilePage() {
   const profile = await getManagerProfile();
 
+  if (!profile) {
+    return <div className="p-8 text-center font-bold">Profile not found</div>;
+  }
+
   return (
     <div className="p-4 lg:p-8 space-y-8 animate-in fade-in duration-700 bg-[#F5F7FA] min-h-screen">
       <Card className="border-none shadow-sm overflow-hidden rounded-2xl bg-white">
