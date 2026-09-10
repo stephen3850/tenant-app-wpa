@@ -33,7 +33,7 @@ export class LeaseService {
 
       await tx.unit.update({
         where: { id: data.unitId },
-        data: { status: "OCCUPIED" },
+        data: { occupancyStatus: "OCCUPIED" },
       });
 
       await createAuditLog({
@@ -73,7 +73,7 @@ export class LeaseService {
 
       await tx.unit.update({
         where: { id: lease.unitId },
-        data: { status: "VACANT" },
+        data: { occupancyStatus: "VACANT" },
       });
 
       return lease;
