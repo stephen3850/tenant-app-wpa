@@ -6,16 +6,17 @@ import { redirect } from "next/navigation";
 export default async function LandlordPropertiesPage({
   searchParams,
 }: {
-  searchParams: { status?: string; search?: string };
+  searchParams: Promise<{ status?: string; search?: string }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
   }
 
   const properties = await getLandlordProperties({
-    status: searchParams.status,
-    search: searchParams.search,
+    status: params.status,
+    search: params.search,
   });
 
   return <LandlordPropertiesList properties={properties} />;

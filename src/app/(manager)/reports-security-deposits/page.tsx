@@ -23,16 +23,17 @@ export const dynamic = "force-dynamic";
 export default async function SecurityDepositsReportPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const organizationId = (session.user as any).organizationId;
 
   // 1. DATA WIRING: Extract Filters
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : undefined;
-  const status = typeof searchParams.status === "string" ? searchParams.status : undefined;
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : undefined;
+  const status = typeof params.status === "string" ? params.status : undefined;
 
   // 2. PURGE DUMMY DATA: Actual DB queries
   const [properties, tenants] = await Promise.all([

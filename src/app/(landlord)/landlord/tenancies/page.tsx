@@ -9,15 +9,16 @@ import Link from "next/link";
 export default async function LandlordTenanciesPage({
   searchParams,
 }: {
-  searchParams: { propertyId?: string; status?: string; search?: string };
+  searchParams: Promise<{ propertyId?: string; status?: string; search?: string }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
   }
 
   const [tenancies, insights] = await Promise.all([
-    getLandlordTenancies(searchParams),
+    getLandlordTenancies(params),
     getLeaseInsights(),
   ]);
 

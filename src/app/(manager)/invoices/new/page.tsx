@@ -7,8 +7,9 @@ import { serialize } from "@/lib/utils";
 export default async function NewInvoicePage({
   searchParams,
 }: {
-  searchParams: { tenantId?: string };
+  searchParams: Promise<{ tenantId?: string }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -16,8 +17,17 @@ export default async function NewInvoicePage({
   const db = getTenantDb(organizationId);
 
   let tenant = null;
-  if (searchParams.tenantId) {
+  if (params.tenantId) {
     tenant = await db.tenant.findUnique({
+      where: { id: params.tenantId },
+      include: {
+        leases: {
+          where: { status: "ACTIVE" },
+          include: { unit: true }
+        }
+      }
+    });
+  }
       where: { id: searchParams.tenantId },
     });
   }

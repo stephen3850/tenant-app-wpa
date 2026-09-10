@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default async function OrganizationsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
+  const params = await searchParams;
   const filters = {
-    search: searchParams.search,
-    status: searchParams.status as any,
-    plan: searchParams.plan,
+    search: params.search,
+    status: params.status as any,
+    plan: params.plan,
   };
 
   const organizations = await getOrganizations(filters);

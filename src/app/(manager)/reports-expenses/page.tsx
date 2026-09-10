@@ -24,15 +24,16 @@ export const dynamic = "force-dynamic";
 export default async function ExpenseReportPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const organizationId = (session.user as any).organizationId;
 
   // 1. END-TO-END DATA WIRING
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : undefined;
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : undefined;
   const categoryId = typeof searchParams.categoryId === "string" ? searchParams.categoryId : undefined;
   const start = typeof searchParams.start === "string" ? parseISO(searchParams.start) : startOfMonth(new Date());
   const end = typeof searchParams.end === "string" ? parseISO(searchParams.end) : endOfMonth(new Date());
