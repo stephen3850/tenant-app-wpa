@@ -5,6 +5,7 @@ import { SuccessInsights } from "./components/success-insights";
 import { OrganizationTimeline } from "./components/organization-timeline";
 import { FinancialOverview } from "./components/financial-overview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
     LayoutDashboardIcon,
     BarChart3Icon,
