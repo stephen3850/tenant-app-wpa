@@ -1,5 +1,5 @@
 import { leaseRepository } from "../repositories/lease-repository";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { checkPermission } from "@/lib/permissions";
 import { createAuditLog } from "@/lib/audit";
@@ -31,7 +31,7 @@ export class LeaseService {
     const user = await this.getSession();
     await checkPermission("create", "lease");
 
-    return await prisma.$transaction(async (tx) => {
+    return await db.$transaction(async (tx) => {
       // Check if unit has an active lease
       const existingActive = await tx.lease.findFirst({
         where: {
@@ -73,7 +73,7 @@ export class LeaseService {
     const user = await this.getSession();
     await checkPermission("update", "lease");
 
-    return await prisma.$transaction(async (tx) => {
+    return await db.$transaction(async (tx) => {
       const lease = await tx.lease.findFirst({
         where: { id, organizationId: user.organizationId }
       });
@@ -110,7 +110,7 @@ export class LeaseService {
     const user = await this.getSession();
     await checkPermission("create", "lease");
 
-    return await prisma.$transaction(async (tx) => {
+    return await db.$transaction(async (tx) => {
       const oldLease = await tx.lease.findFirst({
         where: { id, organizationId: user.organizationId }
       });

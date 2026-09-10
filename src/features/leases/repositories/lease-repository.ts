@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { LeaseStatus, Prisma } from "@prisma/client";
 import { LeaseFilterValues } from "../schemas";
 
@@ -35,7 +35,7 @@ export class LeaseRepository {
       }
     }
 
-    return prisma.lease.findMany({
+    return db.lease.findMany({
       where,
       include: {
         property: true,
@@ -49,7 +49,7 @@ export class LeaseRepository {
   }
 
   async findById(id: string, organizationId: string) {
-    return prisma.lease.findFirst({
+    return db.lease.findFirst({
       where: {
         id,
         organizationId,
@@ -69,45 +69,45 @@ export class LeaseRepository {
   }
 
   async create(data: Prisma.LeaseCreateInput) {
-    return prisma.lease.create({
+    return db.lease.create({
       data,
     });
   }
 
   async update(id: string, organizationId: string, data: Prisma.LeaseUpdateInput) {
-    const lease = await prisma.lease.findFirst({
+    const lease = await db.lease.findFirst({
       where: { id, organizationId }
     });
 
     if (!lease) throw new Error("Lease not found or unauthorized");
 
-    return prisma.lease.update({
+    return db.lease.update({
       where: { id },
       data,
     });
   }
 
   async softDelete(id: string, organizationId: string) {
-    const lease = await prisma.lease.findFirst({
+    const lease = await db.lease.findFirst({
       where: { id, organizationId }
     });
 
     if (!lease) throw new Error("Lease not found or unauthorized");
 
-    return prisma.lease.update({
+    return db.lease.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
   }
 
   async restore(id: string, organizationId: string) {
-    const lease = await prisma.lease.findFirst({
+    const lease = await db.lease.findFirst({
       where: { id, organizationId }
     });
 
     if (!lease) throw new Error("Lease not found or unauthorized");
 
-    return prisma.lease.update({
+    return db.lease.update({
       where: { id },
       data: { deletedAt: null, status: LeaseStatus.ACTIVE },
     });
@@ -118,17 +118,17 @@ export class LeaseRepository {
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
     const [active, expiring, expired, renewed, revenue] = await Promise.all([
-      prisma.lease.count({ where: { organizationId, status: LeaseStatus.ACTIVE } }),
-      prisma.lease.count({
+      db.lease.count({ where: { organizationId, status: LeaseStatus.ACTIVE } }),
+      db.lease.count({
         where: {
           organizationId,
           status: LeaseStatus.ACTIVE,
           endDate: { lte: thirtyDaysFromNow, gte: new Date() }
         }
       }),
-      prisma.lease.count({ where: { organizationId, status: LeaseStatus.EXPIRED } }),
-      prisma.lease.count({ where: { organizationId, status: LeaseStatus.RENEWED } }),
-      prisma.lease.aggregate({
+      db.lease.count({ where: { organizationId, status: LeaseStatus.EXPIRED } }),
+      db.lease.count({ where: { organizationId, status: LeaseStatus.RENEWED } }),
+      db.lease.aggregate({
         where: { organizationId, status: LeaseStatus.ACTIVE },
         _sum: { monthlyRent: true }
       })

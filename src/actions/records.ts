@@ -1,4 +1,4 @@
-"use strict";
+"use server";
 
 import { auth } from "@/auth";
 import { recordsService } from "@/features/records/services/records-service";

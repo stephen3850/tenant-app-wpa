@@ -1,11 +1,11 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function createTenant(data: any, organizationId: string) {
   try {
-    const tenant = await prisma.tenant.create({
+    const tenant = await db.tenant.create({
       data: {
         ...data,
         organizationId,
@@ -20,14 +20,14 @@ export async function createTenant(data: any, organizationId: string) {
 }
 
 export async function getTenants(organizationId: string) {
-  return await prisma.tenant.findMany({
+  return await db.tenant.findMany({
     where: { organizationId },
   });
 }
 
 export async function createLease(data: any) {
   try {
-    const lease = await prisma.$transaction(async (tx) => {
+    const lease = await db.$transaction(async (tx) => {
       const tenant = await tx.tenant.findUnique({
         where: { id: data.tenantId }
       });
@@ -59,7 +59,7 @@ export async function createLease(data: any) {
 }
 
 export async function getLeases(organizationId: string) {
-  return await prisma.lease.findMany({
+  return await db.lease.findMany({
     where: {
       tenant: { organizationId },
     },

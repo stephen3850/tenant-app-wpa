@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { TenantStatus, Prisma } from "@prisma/client";
 import { TenantFilters } from "../schemas/tenant-schema";
 
@@ -40,7 +40,7 @@ export class TenantRepository {
       }
     }
 
-    return prisma.tenant.findMany({
+    return db.tenant.findMany({
       where,
       include: {
         leases: {
@@ -61,7 +61,7 @@ export class TenantRepository {
   }
 
   async findById(id: string, organizationId: string) {
-    return prisma.tenant.findFirst({
+    return db.tenant.findFirst({
       where: {
         id,
         organizationId,
@@ -101,32 +101,32 @@ export class TenantRepository {
   }
 
   async create(data: Prisma.TenantCreateInput) {
-    return prisma.tenant.create({
+    return db.tenant.create({
       data,
     });
   }
 
   async update(id: string, organizationId: string, data: Prisma.TenantUpdateInput) {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await db.tenant.findFirst({
       where: { id, organizationId },
     });
 
     if (!tenant) throw new Error("Tenant not found or unauthorized");
 
-    return prisma.tenant.update({
+    return db.tenant.update({
       where: { id },
       data,
     });
   }
 
   async delete(id: string, organizationId: string) {
-    const tenant = await prisma.tenant.findFirst({
+    const tenant = await db.tenant.findFirst({
       where: { id, organizationId },
     });
 
     if (!tenant) throw new Error("Tenant not found or unauthorized");
 
-    return prisma.tenant.delete({
+    return db.tenant.delete({
       where: { id },
     });
   }
@@ -136,11 +136,11 @@ export class TenantRepository {
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [total, active, former, blacklisted, newThisMonth] = await Promise.all([
-      prisma.tenant.count({ where: { organizationId } }),
-      prisma.tenant.count({ where: { organizationId, status: TenantStatus.ACTIVE } }),
-      prisma.tenant.count({ where: { organizationId, status: TenantStatus.FORMER } }),
-      prisma.tenant.count({ where: { organizationId, status: TenantStatus.BLACKLISTED } }),
-      prisma.tenant.count({
+      db.tenant.count({ where: { organizationId } }),
+      db.tenant.count({ where: { organizationId, status: TenantStatus.ACTIVE } }),
+      db.tenant.count({ where: { organizationId, status: TenantStatus.FORMER } }),
+      db.tenant.count({ where: { organizationId, status: TenantStatus.BLACKLISTED } }),
+      db.tenant.count({
         where: {
           organizationId,
           createdAt: { gte: firstDayOfMonth }

@@ -1,4 +1,4 @@
-"use strict";
+"use server";
 
 import { auth } from "@/auth";
 import { utilityService } from "@/features/utilities/services/utility-service";
