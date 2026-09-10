@@ -167,8 +167,8 @@ export default async function SecurityDepositsReportPage({
                     <td className="px-4 py-2 text-[11px] font-black text-[#1E293B] text-right">{d.received.toLocaleString()}</td>
                     <td className="px-4 py-2">
                        <div className="flex gap-1">
-                         {d.isMissing && <AlertCircle className="h-3.5 w-3.5 text-rose-500" title="Missing Deposit" />}
-                         {d.hasRefundIssue && <AlertCircle className="h-3.5 w-3.5 text-orange-500" title="Refund Pending" />}
+                         {d.isMissing && <AlertCircle className="h-3.5 w-3.5 text-rose-500" />}
+                         {d.hasRefundIssue && <AlertCircle className="h-3.5 w-3.5 text-orange-500" />}
                          {!d.isMissing && !d.hasRefundIssue && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
                        </div>
                     </td>
