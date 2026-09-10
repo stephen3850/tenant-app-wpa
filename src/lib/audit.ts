@@ -11,6 +11,7 @@ export async function createAuditLog({
   organizationId,
   ipAddress,
   userAgent,
+  reason,
 }: {
   action: string;
   entity: string;
@@ -21,6 +22,7 @@ export async function createAuditLog({
   organizationId?: string;
   ipAddress?: string;
   userAgent?: string;
+  reason?: string;
 }) {
   let finalUserId = userId;
   let finalOrgId = organizationId;
@@ -45,6 +47,7 @@ export async function createAuditLog({
       newData: newData ? JSON.parse(JSON.stringify(newData)) : undefined,
       ipAddress,
       userAgent,
+      reason,
       userId: finalUserId,
       organizationId: finalOrgId || "SYSTEM",
     },
@@ -58,6 +61,7 @@ export async function systemAuditLog({
   organizationId,
   oldData,
   newData,
+  reason,
 }: {
   action: string;
   entity: string;
@@ -65,6 +69,7 @@ export async function systemAuditLog({
   organizationId: string;
   oldData?: any;
   newData?: any;
+  reason?: string;
 }) {
   await db.auditLog.create({
     data: {
@@ -75,6 +80,7 @@ export async function systemAuditLog({
       newData: newData ? JSON.parse(JSON.stringify(newData)) : undefined,
       userId: "SYSTEM", // Special marker for automated tasks
       organizationId,
+      reason,
     },
   });
 }
