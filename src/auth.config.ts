@@ -3,8 +3,6 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 
-console.log("Evaluating auth.config.ts");
-
 export default {
   providers: [
     Credentials({

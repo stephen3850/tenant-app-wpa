@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/auth";
 import { Shell } from "@/components/shared/shell";
 import { redirect } from "next/navigation";
@@ -15,9 +17,6 @@ export default async function ManagerLayout({
   }
 
   const organizationStatus = (session.user as any).organizationStatus;
-
-  // Triggering re-scan for new routes
-  console.log("Manager layout rendering...");
 
   return (
     <TenantProvider>

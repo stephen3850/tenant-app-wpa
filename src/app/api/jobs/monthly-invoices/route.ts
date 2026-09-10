@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { qstash, verifyQStashSignature } from "@/lib/qstash";
+import { getQStashClient, verifyQStashSignature } from "@/lib/qstash";
 import { jobService } from "@/features/jobs/services/job-service";
 
 /**
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     // Fan-out to per-organization jobs
     const promises = orgIds.map(orgId =>
-      qstash.publishJSON({
+      getQStashClient().publishJSON({
         url: `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs/monthly-invoices/process-org`,
         body: { organizationId: orgId },
       })
