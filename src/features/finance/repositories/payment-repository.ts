@@ -27,7 +27,7 @@ export class PaymentRepository {
     });
   }
 
-  async create(data: Prisma.PaymentCreateUncheckedInput, tx?: Prisma.TransactionClient) {
+  async create(data: Prisma.PaymentUncheckedCreateInput, tx?: Prisma.TransactionClient) {
     const client = tx || db;
     return client.payment.create({ data });
   }

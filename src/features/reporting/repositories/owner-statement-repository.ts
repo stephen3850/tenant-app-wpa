@@ -32,7 +32,7 @@ export class OwnerStatementRepository {
     });
   }
 
-  async createStatement(data: Prisma.OwnerStatementCreateUncheckedInput, lineItems: Prisma.OwnerStatementLineCreateManyInput[]) {
+  async createStatement(data: Prisma.OwnerStatementUncheckedCreateInput, lineItems: Prisma.OwnerStatementLineCreateManyInput[]) {
     return this.db.$transaction(async (tx) => {
       const statement = await tx.ownerStatement.create({
         data,
@@ -49,7 +49,7 @@ export class OwnerStatementRepository {
     });
   }
 
-  async updateStatement(id: string, data: Prisma.OwnerStatementUpdateUncheckedInput) {
+  async updateStatement(id: string, data: Prisma.OwnerStatementUncheckedUpdateInput) {
     return this.db.ownerStatement.update({
       where: { id },
       data,

@@ -3,11 +3,10 @@ import { redirect, notFound } from "next/navigation";
 import { tenantInvoiceService } from "@/features/tenant/services/tenant-invoice-service";
 import { InvoiceDetails } from "@/features/tenant/components/invoice-details";
 
-export default async function TenantInvoiceDetailsPage({ params }: any) {
+export default async function TenantInvoiceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
-
-  const { id } = await params;
 
   try {
     const invoice = await tenantInvoiceService.getInvoiceDetails(session.user.id, id);

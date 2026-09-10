@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default async function SecurityIncidentsPage({ searchParams }: any) {
+export default async function SecurityIncidentsPage({ searchParams }: { searchParams: Promise<any> }) {
   const params = await searchParams;
   const { incidents, total } = await getSecurityIncidents(params);
 
@@ -37,74 +37,76 @@ export default async function SecurityIncidentsPage({ searchParams }: any) {
         </Button>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search by incident number or title..."
-            className="pl-10 border-slate-200 bg-slate-50/50"
-          />
-        </div>
-        <div className="flex gap-2">
-            <Button variant="outline" className="border-slate-200 font-bold">
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-            </Button>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard title="Open Incidents" value={incidents.filter((i:any) => i.status !== 'CLOSED').length} icon={AlertTriangle} color="text-rose-600" />
+          <StatCard title="Critical Breaches" value={incidents.filter((i:any) => i.severity === 'CRITICAL').length} icon={ShieldCheck} color="text-amber-600" />
+          <StatCard title="Resolved (24h)" value="0" icon={ShieldCheck} color="text-emerald-600" />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50/50">
+          <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-bold text-slate-700">Incident #</TableHead>
-              <TableHead className="font-bold text-slate-700">Title</TableHead>
-              <TableHead className="font-bold text-slate-700">Severity</TableHead>
-              <TableHead className="font-bold text-slate-700">Status</TableHead>
-              <TableHead className="font-bold text-slate-700">Investigator</TableHead>
-              <TableHead className="text-right"></TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest pl-6">Incident #</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Title</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Severity</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Target User</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right pr-6">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {incidents.map((incident: any) => (
               <TableRow key={incident.id} className="hover:bg-slate-50/50 transition-colors">
-                <TableCell className="font-mono font-bold text-rose-600">
+                <TableCell className="font-black text-xs text-slate-500 pl-6">
                   {incident.incidentNumber}
                 </TableCell>
                 <TableCell>
-                  <div className="font-bold text-slate-900 text-sm">{incident.title}</div>
-                  <div className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">{incident.description}</div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900">{incident.title}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">{new Date(incident.createdAt).toLocaleDateString()}</span>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <SeverityBadge severity={incident.severity} />
+                   <SeverityBadge severity={incident.severity} />
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={incident.status} />
+                   <StatusBadge status={incident.status} />
                 </TableCell>
-                <TableCell className="text-xs font-bold text-slate-600">
-                    {incident.investigator?.name || "Unassigned"}
+                <TableCell>
+                   {incident.targetUser ? (
+                     <div className="flex flex-col text-xs">
+                        <span className="font-bold text-slate-700">{incident.targetUser.name}</span>
+                        <span className="text-slate-400">{incident.targetUser.email}</span>
+                     </div>
+                   ) : <span className="text-slate-400 text-xs italic">N/A</span>}
                 </TableCell>
-                <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/security/incidents/${incident.id}`}>
-                            <ExternalLink className="w-4 h-4" />
-                        </Link>
+                <TableCell className="text-right pr-6">
+                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black text-blue-600 uppercase">
+                        Investigate
                     </Button>
                 </TableCell>
               </TableRow>
             ))}
-            {incidents.length === 0 && (
-                <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-400 font-medium">
-                        No active incidents found.
-                    </TableCell>
-                </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
     </div>
   );
+}
+
+function StatCard({ title, value, icon: Icon, color }: any) {
+    return (
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+                <h3 className="text-2xl font-black text-slate-900">{value}</h3>
+            </div>
+            <div className={`p-3 rounded-xl bg-slate-50 ${color}`}>
+                <Icon className="w-5 h-5" />
+            </div>
+        </div>
+    )
 }
 
 function SeverityBadge({ severity }: { severity: string }) {

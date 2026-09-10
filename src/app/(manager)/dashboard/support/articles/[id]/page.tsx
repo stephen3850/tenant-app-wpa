@@ -8,12 +8,12 @@ import { ChevronLeftIcon, EyeIcon, EditIcon, HistoryIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default async function ArticlePage({ params }: any) {
+export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as any;
-  const { id } = await params;
   const article = await supportService.getArticle(id, user.organizationId);
   const categories = await supportService.getCategories(user.organizationId);
 

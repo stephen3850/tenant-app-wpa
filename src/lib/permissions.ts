@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 
 export type Action = "create" | "read" | "update" | "delete" | "manage" | "view" | "assign" | "close" | "archive" | "export" | "retention" | "send" | "announce" | "template" | "approve" | "bill" | "suspend" | "pay" | "publish" | "download";
-export type Subject = "property" | "unit" | "tenant" | "lease" | "user" | "organization" | "ticket" | "case" | "security" | "records" | "communications" | "utilities" | "users" | "roles" | "billing" | "support" | "all";
+export type Subject = "property" | "unit" | "tenant" | "lease" | "user" | "organization" | "ticket" | "case" | "security" | "records" | "communications" | "utilities" | "users" | "roles" | "billing" | "support" | "all" | "invoice" | "payment" | "expense" | "expenses";
 
 /**
  * Validates if a user has a specific permission.

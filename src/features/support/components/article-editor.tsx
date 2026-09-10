@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { createArticle, updateArticle, publishArticle } from "@/actions/support";
 
 export function ArticleEditor({ article, categories }: any) {
@@ -62,7 +63,7 @@ export function ArticleEditor({ article, categories }: any) {
             {loading ? "Saving..." : "Save Draft"}
           </Button>
           {article && article.status !== "PUBLISHED" && (
-            <Button type="button" variant="success" onClick={handlePublish} disabled={loading}>
+            <Button type="button" variant="default" onClick={handlePublish} disabled={loading}>
               Publish
             </Button>
           )}

@@ -29,7 +29,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
-export default async function UsersDirectoryPage({ searchParams }: any) {
+export default async function UsersDirectoryPage({ searchParams }: { searchParams: Promise<any> }) {
   const params = await searchParams;
   const { users, total } = await getUsers(params);
 
@@ -45,85 +45,84 @@ export default async function UsersDirectoryPage({ searchParams }: any) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search by name, email or ID..."
-            className="pl-10 border-slate-200 bg-slate-50/50"
-          />
-        </div>
-        <Button variant="outline" className="border-slate-200 font-bold">
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
+      <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input placeholder="Search users by name, email, or organization..." className="pl-10 font-medium border-slate-200 focus-visible:ring-slate-900" />
+          </div>
+          <Button variant="outline" className="font-bold border-slate-200">
+            <Filter className="w-4 h-4 mr-2" />
+            Advanced Filters
+          </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50/50">
+          <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-bold text-slate-700">User</TableHead>
-              <TableHead className="font-bold text-slate-700">Organization</TableHead>
-              <TableHead className="font-bold text-slate-700">Status</TableHead>
-              <TableHead className="font-bold text-slate-700">MFA</TableHead>
-              <TableHead className="font-bold text-slate-700">Last Login</TableHead>
-              <TableHead className="text-right"></TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest pl-6">User Identity</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Organization</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Security</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Joined Date</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right pr-6">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user: any) => (
               <TableRow key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                <TableCell>
+                <TableCell className="pl-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
-                      {user.name ? user.name[0] : user.email[0].toUpperCase()}
+                    <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center">
+                       <UserIcon className="w-4 h-4 text-slate-400" />
                     </div>
-                    <div>
-                      <div className="font-bold text-slate-900">{user.name || "N/A"}</div>
-                      <div className="text-xs text-slate-500 font-medium">{user.email}</div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-900 leading-none mb-1">{user.name || "Unnamed User"}</span>
+                      <span className="text-xs text-slate-500">{user.email}</span>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 font-bold text-slate-700 text-sm">
+                  <div className="flex items-center gap-1.5 text-slate-600 font-medium text-xs">
                     <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    {user.organization?.name || "Platform"}
+                    {user.organization?.name || "No Organization"}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={user.status} />
+                   <StatusBadge status={user.status} />
                 </TableCell>
                 <TableCell>
-                  {user.mfaEnabled ? (
-                    <div className="flex items-center text-emerald-600 gap-1 font-bold text-xs uppercase tracking-wider">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      Active
+                    <div className="flex gap-1.5">
+                        {user.mfaEnabled ? (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100 font-bold text-[9px] uppercase">MFA</Badge>
+                        ) : (
+                            <Badge variant="outline" className="bg-slate-100 text-slate-400 border-slate-200 font-bold text-[9px] uppercase">NO MFA</Badge>
+                        )}
+                        {user.emailVerified ? (
+                            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                        ) : (
+                            <ShieldAlert className="w-4 h-4 text-rose-400" />
+                        )}
                     </div>
-                  ) : (
-                    <div className="flex items-center text-rose-500 gap-1 font-bold text-xs uppercase tracking-wider">
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                      Disabled
-                    </div>
-                  )}
                 </TableCell>
-                <TableCell className="text-sm font-medium text-slate-500">
-                  {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : "Never"}
+                <TableCell className="text-slate-500 text-xs font-medium">
+                  {new Date(user.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right pr-6">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/users/${user.id}`}>View Details</Link>
-                      </DropdownMenuItem>
+                    <DropdownMenuContent align="end" className="w-48 font-bold">
+                      <DropdownMenuLabel>User Management</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-rose-600 font-bold">Suspend User</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/users/${user.id}`}>View Profile</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>Security Logs</DropdownMenuItem>
+                      <DropdownMenuItem className="text-rose-600">Impersonate</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

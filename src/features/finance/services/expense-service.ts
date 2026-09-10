@@ -10,27 +10,31 @@ export class ExpenseService {
   }
 
   async recordExpense(data: {
-    propertyId?: string;
+    propertyId: string;
+    categoryId: string;
+    vendorId: string;
     unitId?: string;
-    category: string;
     amount: number;
     description: string;
-    date: Date;
+    expenseDate: Date;
+    createdById: string;
   }) {
     const user = await this.getSession();
-    await checkPermission("create", "expense");
+    await checkPermission("create", "expenses");
 
     return db.expense.create({
       data: {
         ...data,
+        expenseNumber: `EXP-${Date.now()}`,
         organizationId: user.organizationId,
+        totalAmount: data.amount,
       },
     });
   }
 
   async listExpenses(propertyId?: string) {
     const user = await this.getSession();
-    await checkPermission("read", "expense");
+    await checkPermission("read", "expenses");
 
     return db.expense.findMany({
       where: {
@@ -38,7 +42,7 @@ export class ExpenseService {
         ...(propertyId && { propertyId })
       },
       include: { property: true, unit: true },
-      orderBy: { date: "desc" },
+      orderBy: { expenseDate: "desc" },
     });
   }
 }

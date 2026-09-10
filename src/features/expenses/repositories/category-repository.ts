@@ -14,7 +14,7 @@ export class CategoryRepository {
     });
   }
 
-  async create(data: Prisma.ExpenseCategoryCreateUncheckedInput) {
+  async create(data: Prisma.ExpenseCategoryUncheckedCreateInput) {
     return db.expenseCategory.create({ data });
   }
 

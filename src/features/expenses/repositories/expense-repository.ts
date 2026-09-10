@@ -40,11 +40,11 @@ export class ExpenseRepository {
     });
   }
 
-  async create(data: Prisma.ExpenseCreateUncheckedInput) {
+  async create(data: Prisma.ExpenseUncheckedCreateInput) {
     return db.expense.create({ data });
   }
 
-  async update(id: string, organizationId: string, data: Prisma.ExpenseUpdateUncheckedInput) {
+  async update(id: string, organizationId: string, data: Prisma.ExpenseUncheckedUpdateInput) {
     return db.expense.update({
       where: { id, organizationId },
       data,

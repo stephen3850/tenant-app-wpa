@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { LeaseStatusBadge } from "./lease-status-badge";
+import { Button } from "@/components/ui/button";
 
 interface LeaseDetailsProps {
   lease: any;

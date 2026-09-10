@@ -13,10 +13,12 @@ export class MaintenanceService {
       data: {
         organizationId,
         creatorId,
+        ticketNumber: `TKT-${Date.now()}`,
+        categoryId: input.categoryId,
         propertyId: input.propertyId,
         unitId: input.unitId,
         tenantId: input.tenantId,
-        title: input.title,
+        subject: input.subject,
         description: input.description,
         priority: input.priority,
         dueDate: input.dueDate,

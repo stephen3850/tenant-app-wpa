@@ -11,9 +11,10 @@ export class TicketService {
 
   async createTicket(data: {
     propertyId: string;
+    categoryId: string;
     unitId?: string;
     tenantId?: string;
-    title: string;
+    subject: string;
     description: string;
     priority: string;
   }) {
@@ -23,9 +24,11 @@ export class TicketService {
     return db.ticket.create({
       data: {
         ...data,
+        ticketNumber: `TKT-${Date.now()}`,
         organizationId: user.organizationId,
         creatorId: user.id,
         status: "OPEN",
+        priority: data.priority as any,
       },
     });
   }

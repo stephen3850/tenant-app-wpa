@@ -23,7 +23,7 @@ export class OwnerStatementService {
 
     const statementNumber = `STMT-${Date.now()}`;
 
-    const statementData: Prisma.OwnerStatementCreateUncheckedInput = {
+    const statementData: Prisma.OwnerStatementUncheckedCreateInput = {
       organizationId: "", // Will be set by repository's tenant db
       landlordId,
       statementNumber,

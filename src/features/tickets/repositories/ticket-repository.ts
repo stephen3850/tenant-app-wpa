@@ -92,11 +92,11 @@ export class TicketRepository {
     });
   }
 
-  async create(data: Prisma.TicketCreateUncheckedInput) {
+  async create(data: Prisma.TicketUncheckedCreateInput) {
     return db.ticket.create({ data });
   }
 
-  async update(id: string, organizationId: string, data: Prisma.TicketUpdateUncheckedInput) {
+  async update(id: string, organizationId: string, data: Prisma.TicketUncheckedUpdateInput) {
     const ticket = await db.ticket.findFirst({
       where: { id, organizationId }
     });

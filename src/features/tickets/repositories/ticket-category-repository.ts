@@ -14,7 +14,7 @@ export class TicketCategoryRepository {
     });
   }
 
-  async create(data: Prisma.TicketCategoryCreateUncheckedInput) {
+  async create(data: Prisma.TicketCategoryUncheckedCreateInput) {
     return db.ticketCategory.create({ data });
   }
 

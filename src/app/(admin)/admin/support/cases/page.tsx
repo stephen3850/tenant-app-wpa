@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default async function SupportCasesPage({ searchParams }: any) {
+export default async function SupportCasesPage({ searchParams }: { searchParams: Promise<any> }) {
   const params = await searchParams;
   const { cases, total } = await getSupportCases(params);
 
@@ -34,60 +34,42 @@ export default async function SupportCasesPage({ searchParams }: any) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Search cases by number or subject..."
-            className="pl-10 border-slate-200 bg-slate-50/50"
-          />
-        </div>
-        <Button variant="outline" className="border-slate-200 font-bold">
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50/50">
+          <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-bold text-slate-700">Case #</TableHead>
-              <TableHead className="font-bold text-slate-700">Organization</TableHead>
-              <TableHead className="font-bold text-slate-700">Requester</TableHead>
-              <TableHead className="font-bold text-slate-700">Priority</TableHead>
-              <TableHead className="font-bold text-slate-700">Status</TableHead>
-              <TableHead className="font-bold text-slate-700">Created</TableHead>
-              <TableHead className="text-right"></TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest pl-6">Case ID</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Subject</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Priority</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest">Organization</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest text-right pr-6">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {cases.map((c: any) => (
               <TableRow key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                <TableCell className="font-mono font-bold text-blue-600">
+                <TableCell className="font-black text-xs text-slate-500 pl-6">
                   {c.caseNumber}
                 </TableCell>
-                <TableCell className="font-bold text-slate-700 text-sm">
-                  {c.organization.name}
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900">{c.subject}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">{c.category} • {new Date(c.createdAt).toLocaleDateString()}</span>
+                  </div>
                 </TableCell>
                 <TableCell>
-                    <div className="font-bold text-slate-900 text-sm">{c.requester.name}</div>
-                    <div className="text-[10px] text-slate-400 font-medium">{c.requester.email}</div>
+                   <PriorityBadge priority={c.priority} />
                 </TableCell>
                 <TableCell>
-                  <PriorityBadge priority={c.priority} />
+                   <StatusBadge status={c.status} />
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={c.status} />
+                    <span className="font-bold text-slate-700 text-xs">{c.organization?.name || "Platform"}</span>
                 </TableCell>
-                <TableCell className="text-sm font-medium text-slate-500">
-                  {new Date(c.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/support/cases/${c.id}`}>
-                            <ExternalLink className="w-4 h-4" />
-                        </Link>
+                <TableCell className="text-right pr-6">
+                    <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black text-blue-600 uppercase">
+                        View
                     </Button>
                 </TableCell>
               </TableRow>

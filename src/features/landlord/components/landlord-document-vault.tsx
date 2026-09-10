@@ -99,15 +99,14 @@ export function LandlordDocumentVault({ documents }: { documents: any[] }) {
             </TableHeader>
             <TableBody>
               {filteredDocs.map((doc) => (
-                <TableRow key={doc.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" asChild>
-                  <Link href={`/landlord/documents/${doc.id}`}>
+                <TableRow key={doc.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                     <TableCell className="text-center pl-4">
                        <button onClick={(e) => handleFavorite(doc.id, e)} className="hover:scale-110 transition-transform">
                           <StarIcon className={`h-4 w-4 ${doc.favorites.length > 0 ? "fill-orange-400 text-orange-400" : "text-slate-300"}`} />
                        </button>
                     </TableCell>
                     <TableCell className="pl-2">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/landlord/documents/${doc.id}`} className="flex items-center gap-3">
                          <div className="bg-slate-100 p-2 rounded-lg group-hover:bg-white transition-colors">
                             {getFileIcon(doc.fileType)}
                          </div>
@@ -115,7 +114,7 @@ export function LandlordDocumentVault({ documents }: { documents: any[] }) {
                             <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{doc.name}</p>
                             <p className="text-[10px] font-medium text-slate-400">{(doc.fileSize / 1024 / 1024).toFixed(2)} MB • {doc.fileType?.split("/")[1]?.toUpperCase()}</p>
                          </div>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>
                        {getCategoryBadge(doc.category)}
@@ -137,15 +136,16 @@ export function LandlordDocumentVault({ documents }: { documents: any[] }) {
                     </TableCell>
                     <TableCell className="text-right pr-6">
                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black text-blue-600 uppercase hover:bg-blue-50">
-                             <EyeIcon className="h-3.5 w-3.5 mr-1" /> View
+                          <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black text-blue-600 uppercase hover:bg-blue-50" asChild>
+                             <Link href={`/landlord/documents/${doc.id}`}>
+                                <EyeIcon className="h-3.5 w-3.5 mr-1" /> View
+                             </Link>
                           </Button>
                           <Button variant="ghost" size="sm" className="h-8 text-slate-400 hover:text-slate-900">
                              <DownloadIcon className="h-3.5 w-3.5" />
                           </Button>
                        </div>
                     </TableCell>
-                  </Link>
                 </TableRow>
               ))}
               {filteredDocs.length === 0 && (

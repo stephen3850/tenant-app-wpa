@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 
 export class PaymentAllocationRepository {
-  async create(data: Prisma.PaymentAllocationCreateUncheckedInput, tx: Prisma.TransactionClient) {
+  async create(data: Prisma.PaymentAllocationUncheckedCreateInput, tx: Prisma.TransactionClient) {
     return tx.paymentAllocation.create({ data });
   }
 

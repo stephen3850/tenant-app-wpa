@@ -36,7 +36,7 @@ export class LandlordStatementService {
       where: {
         organizationId: orgId,
         propertyId,
-        date: { gte: startDate, lte: endDate }
+        expenseDate: { gte: startDate, lte: endDate }
       }
     });
 

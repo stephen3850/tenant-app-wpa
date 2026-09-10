@@ -23,11 +23,11 @@ export class ReportRepository {
     });
   }
 
-  async createTemplate(data: Prisma.ReportTemplateCreateUncheckedInput) {
+  async createTemplate(data: Prisma.ReportTemplateUncheckedCreateInput) {
     return this.db.reportTemplate.create({ data });
   }
 
-  async updateTemplate(id: string, data: Prisma.ReportTemplateUpdateUncheckedInput) {
+  async updateTemplate(id: string, data: Prisma.ReportTemplateUncheckedUpdateInput) {
     return this.db.reportTemplate.update({
       where: { id },
       data,
@@ -49,7 +49,7 @@ export class ReportRepository {
     });
   }
 
-  async createScheduledReport(data: Prisma.ScheduledReportCreateUncheckedInput) {
+  async createScheduledReport(data: Prisma.ScheduledReportUncheckedCreateInput) {
     return this.db.scheduledReport.create({ data });
   }
 
@@ -60,11 +60,11 @@ export class ReportRepository {
     });
   }
 
-  async createExport(data: Prisma.ReportExportCreateUncheckedInput) {
+  async createExport(data: Prisma.ReportExportUncheckedCreateInput) {
     return this.db.reportExport.create({ data });
   }
 
-  async updateExport(id: string, data: Prisma.ReportExportUpdateUncheckedInput) {
+  async updateExport(id: string, data: Prisma.ReportExportUncheckedUpdateInput) {
     return this.db.reportExport.update({
       where: { id },
       data,

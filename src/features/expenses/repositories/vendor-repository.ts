@@ -15,11 +15,11 @@ export class VendorRepository {
     });
   }
 
-  async create(data: Prisma.VendorCreateUncheckedInput) {
+  async create(data: Prisma.VendorUncheckedCreateInput) {
     return db.vendor.create({ data });
   }
 
-  async update(id: string, organizationId: string, data: Prisma.VendorUpdateUncheckedInput) {
+  async update(id: string, organizationId: string, data: Prisma.VendorUncheckedUpdateInput) {
     return db.vendor.update({
       where: { id, organizationId },
       data,

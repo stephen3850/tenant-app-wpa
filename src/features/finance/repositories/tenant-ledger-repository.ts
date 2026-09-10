@@ -16,7 +16,7 @@ export class TenantLedgerRepository {
     });
   }
 
-  async create(data: Prisma.TenantLedgerCreateUncheckedInput, tx?: Prisma.TransactionClient) {
+  async create(data: Prisma.TenantLedgerUncheckedCreateInput, tx?: Prisma.TransactionClient) {
     const client = tx || db;
     return client.tenantLedger.create({ data });
   }

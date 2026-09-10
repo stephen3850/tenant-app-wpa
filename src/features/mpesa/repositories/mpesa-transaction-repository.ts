@@ -20,7 +20,7 @@ export class MpesaTransactionRepository {
     });
   }
 
-  async create(data: Prisma.MpesaTransactionCreateUncheckedInput) {
+  async create(data: Prisma.MpesaTransactionUncheckedCreateInput) {
     return db.mpesaTransaction.create({ data });
   }
 

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon } from "lucide-react";
 import Link from "next/link";
 
-export default async function KnowledgeBasePage({ searchParams }: any) {
+export default async function KnowledgeBasePage({ searchParams }: { searchParams: Promise<any> }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as any;
-  const params = await searchParams;
   const categories = await supportService.getCategories(user.organizationId);
   const articles = await supportService.getArticles(user.organizationId, {
     categoryId: params.category,
