@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default async function SubscriptionDetailsPage({ params }: { params: { id: string } }) {
+export default async function SubscriptionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sub = await getSubscription(id);
 
