@@ -21,7 +21,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { UserActionToolbar } from "@/components/admin/user-action-toolbar";
 
-export default async function UserDetailsPage({ params }: any) {
+export default async function UserDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const user = await getUser(id);
   const timeline = await getUserTimeline(id);
