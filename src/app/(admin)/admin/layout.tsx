@@ -2,14 +2,15 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  LayoutDashboardIcon,
+  LayoutDashboard,
   Home,
-  UsersIcon,
-  CreditCardIcon,
-  ShieldCheckIcon,
-  ActivityIcon,
-  LifeBuoyIcon,
-  SettingsIcon
+  Users,
+  CreditCard,
+  ShieldCheck,
+  Activity,
+  LifeBuoy,
+  Settings,
+  Building2
 } from "lucide-react";
 import { UserNav } from "@/components/shared/user-nav";
 import { Footer } from "@/components/shared/footer";
@@ -33,13 +34,13 @@ export default async function AdminLayout({
   // }
 
   const navItems = [
-    { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboardIcon },
-    { label: "Organizations", href: "/admin/organizations", icon: Building2Icon },
-    { label: "Users", href: "/admin/users", icon: UsersIcon },
-    { label: "Billing", href: "/admin/billing", icon: CreditCardIcon },
-    { label: "Security", href: "/admin/security", icon: ShieldCheckIcon },
-    { label: "System Health", href: "/admin/health", icon: ActivityIcon },
-    { label: "Support", href: "/admin/support", icon: LifeBuoyIcon },
+    { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "Organizations", href: "/admin/organizations", icon: Building2 },
+    { label: "Users", href: "/admin/users", icon: Users },
+    { label: "Billing", href: "/admin/billing", icon: CreditCard },
+    { label: "Security", href: "/admin/security", icon: ShieldCheck },
+    { label: "System Health", href: "/admin/health", icon: Activity },
+    { label: "Support", href: "/admin/support", icon: LifeBuoy },
   ];
 
   return (
