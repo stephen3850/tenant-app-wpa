@@ -36,7 +36,7 @@ export default async function RentToOwnReportPage() {
     select: { id: true, propertyName: true }
   });
 
-  const agreements = [];
+  const agreements: any[] = [];
 
   const stats = {
     agreements: agreements.length,
