@@ -24,11 +24,11 @@ export default async function LandlordPropertyPage({
 
   const [property, performance, units, documents, tenancy, maintenance] = await Promise.all([
     getLandlordProperty(id),
-    getPropertyPerformance(params.id),
-    getPropertyUnits(params.id),
-    getPropertyDocuments(params.id),
-    getTenancyInsights(params.id),
-    getMaintenanceInsights(params.id)
+    getPropertyPerformance(id),
+    getPropertyUnits(id),
+    getPropertyDocuments(id),
+    getTenancyInsights(id),
+    getMaintenanceInsights(id)
   ]);
 
   if (!property) {
