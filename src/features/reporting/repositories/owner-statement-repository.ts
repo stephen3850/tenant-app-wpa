@@ -2,7 +2,7 @@ import { getTenantDb, systemDb } from "@/lib/tenant-db";
 import { Prisma } from "@prisma/client";
 
 export class OwnerStatementRepository {
-  private db;
+  private db: any;
 
   constructor(organizationId?: string) {
     this.db = organizationId ? getTenantDb(organizationId) : systemDb;
