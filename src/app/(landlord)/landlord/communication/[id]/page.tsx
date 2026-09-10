@@ -6,6 +6,7 @@ import { ChevronLeftIcon, MoreVerticalIcon, AlertCircleIcon } from "lucide-react
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { auth } from "@/auth";
 
 export default async function ConversationDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
