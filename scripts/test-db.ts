@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Organization, Property } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -6,11 +6,11 @@ async function main() {
   console.log("Checking database...");
   const orgs = await prisma.organization.findMany();
   console.log("Organizations:", orgs.length);
-  orgs.forEach(o => console.log(` - ${o.name} (${o.id})`));
+  orgs.forEach((o: Organization) => console.log(` - ${o.name} (${o.id})`));
 
   const properties = await prisma.property.findMany();
   console.log("Properties:", properties.length);
-  properties.forEach(p => console.log(` - ${p.propertyName} [${p.propertyCode}] (Org: ${p.organizationId})`));
+  properties.forEach((p: Property) => console.log(` - ${p.propertyName} [${p.propertyCode}] (Org: ${p.organizationId})`));
 }
 
 main()
