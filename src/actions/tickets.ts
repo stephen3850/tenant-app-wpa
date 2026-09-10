@@ -1,9 +1,9 @@
-"use strict";
+"use server";
 
 import { auth } from "@/auth";
 import { ticketService } from "@/features/tickets/services/ticket-service";
 import { revalidatePath } from "next/cache";
-import { TicketStatus, TicketPriority } from "@prisma/client";
+import type { TicketStatus } from "@prisma/client";
 
 async function getSession() {
   const session = await auth();
