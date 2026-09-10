@@ -28,51 +28,90 @@ export async function login(values: any) {
 }
 
 export async function register(values: any) {
-  const { email, password, name, organizationName } = values;
-  const hashedPassword = await bcrypt.hash(password, 10);
+  try {
+    const { email, password, name, organizationName } = values;
 
-  const existingUser = await db.user.findUnique({
-    where: { email },
-  });
+    if (!email || !password || !organizationName) {
+      return { error: "Please fill in all required fields." };
+    }
 
-  if (existingUser) {
-    return { error: "Email already in use!" };
-  }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Transaction to create Organization, User, and assign Role
-  await db.$transaction(async (tx) => {
-    const org = await tx.organization.create({
-      data: {
-        name: organizationName,
-        slug: organizationName.toLowerCase().replace(/ /g, "-"),
-      },
+    const existingUser = await db.user.findUnique({
+      where: { email },
     });
 
-    const user = await tx.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        organizationId: org.id,
-      },
-    });
+    if (existingUser) {
+      return { error: "Email already in use!" };
+    }
 
-    // Default Role for the creator (Owner/Manager)
-    const adminRole = await tx.role.findFirst({
-      where: { name: "PROPERTY_MANAGER", organizationId: null },
-    });
+    // Transaction to create Organization, User, and assign Role
+    const result = await db.$transaction(async (tx) => {
+      // 1. Create Organization
+      const slug = organizationName.toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/[\s_-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
-    if (adminRole) {
+      const existingOrg = await tx.organization.findUnique({
+        where: { slug }
+      });
+
+      if (existingOrg) {
+        throw new Error("An organization with a similar name already exists. Please choose a different name.");
+      }
+
+      const org = await tx.organization.create({
+        data: {
+          name: organizationName,
+          slug,
+        },
+      });
+
+      // 2. Create User
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          organizationId: org.id,
+          status: "ACTIVE"
+        },
+      });
+
+      // 3. Assign Role (PROPERTY_MANAGER is the default for new registrations)
+      let adminRole = await tx.role.findFirst({
+        where: { name: "PROPERTY_MANAGER", organizationId: null },
+      });
+
+      // Fallback: If roles aren't seeded yet, create the role on the fly or just continue
+      if (!adminRole) {
+        console.warn("System roles not found. Creating default PROPERTY_MANAGER role.");
+        adminRole = await tx.role.create({
+          data: {
+            name: "PROPERTY_MANAGER",
+            description: "Default organization manager",
+            organizationId: null
+          }
+        });
+      }
+
       await tx.userRole.create({
         data: {
           userId: user.id,
           roleId: adminRole.id,
         },
       });
-    }
-  });
 
-  return { success: "User created!" };
+      return { user, org };
+    });
+
+    return { success: "Account created successfully! You can now sign in." };
+  } catch (error: any) {
+    console.error("Registration Error:", error);
+    return { error: error.message || "Something went wrong. Please try again." };
+  }
 }
 
 export async function logout() {

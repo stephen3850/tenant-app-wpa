@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:admin": "npx tsx prisma/create-super-admin.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
