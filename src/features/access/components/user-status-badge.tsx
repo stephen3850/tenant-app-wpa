@@ -7,6 +7,7 @@ const statusConfig: Record<UserStatus, { label: string; variant: "default" | "se
   SUSPENDED: { label: "Suspended", variant: "warning" as any },
   DEACTIVATED: { label: "Deactivated", variant: "destructive" },
   LOCKED: { label: "Locked", variant: "destructive" },
+  ARCHIVED: { label: "Archived", variant: "secondary" },
 };
 
 export function UserStatusBadge({ status }: { status: UserStatus }) {
