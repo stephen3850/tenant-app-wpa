@@ -1,0 +1,30 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { getTenantDb } from "@/lib/tenant-db";
+import { NewInvoiceForm } from "@/features/finance/components/new-invoice-form";
+import { serialize } from "@/lib/utils";
+
+export default async function NewInvoicePage({
+  searchParams,
+}: {
+  searchParams: { tenantId?: string };
+}) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const organizationId = (session.user as any).organizationId;
+  const db = getTenantDb(organizationId);
+
+  let tenant = null;
+  if (searchParams.tenantId) {
+    tenant = await db.tenant.findUnique({
+      where: { id: searchParams.tenantId },
+    });
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <NewInvoiceForm tenant={serialize(tenant)} />
+    </div>
+  );
+}
