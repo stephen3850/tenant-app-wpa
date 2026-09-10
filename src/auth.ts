@@ -8,13 +8,8 @@ export const {
   signOut,
 } = NextAuth({
   trustHost: true,
-  debug: true,
+  debug: process.env.NODE_ENV !== "production",
   session: { strategy: "jwt" },
-  logger: {
-    error: (code, metadata) => console.error("NextAuth Error:", code, metadata),
-    warn: (code) => console.warn("NextAuth Warning:", code),
-    debug: (code, metadata) => console.log("NextAuth Debug:", code, metadata),
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
