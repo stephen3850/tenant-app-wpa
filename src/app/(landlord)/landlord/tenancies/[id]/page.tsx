@@ -7,14 +7,15 @@ import { redirect } from "next/navigation";
 export default async function LandlordTenancyPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
   }
 
-  const tenancy = await getLandlordTenancy(params.id);
+  const tenancy = await getLandlordTenancy(id);
 
   if (!tenancy) {
     notFound();

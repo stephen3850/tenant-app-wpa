@@ -36,7 +36,8 @@ export const metadata: Metadata = {
   description: "View and manage task details.",
 };
 
-export default async function TaskDetailsPage({ params }: { params: { id: string } }) {
+export default async function TaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -44,7 +45,7 @@ export default async function TaskDetailsPage({ params }: { params: { id: string
   const db = getTenantDb(organizationId);
 
   const taskData = await db.task.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       property: true,
       unit: true,

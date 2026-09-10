@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { ShieldAlertIcon, FileIcon, ClockIcon } from "lucide-react";
 
-export default async function IncidentDetailsPage({ params }: { params: { id: string } }) {
+export default async function IncidentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as any;
-  const incident = await securityRepository.findIncidentById(params.id, user.organizationId);
+  const incident = await securityRepository.findIncidentById(id, user.organizationId);
 
   if (!incident) notFound();
 

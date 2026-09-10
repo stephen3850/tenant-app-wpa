@@ -4,7 +4,8 @@ import { getTenantDb } from "@/lib/tenant-db";
 import { InvoiceDetails } from "@/features/tenant/components/invoice-details";
 import { serialize } from "@/lib/utils";
 
-export default async function InvoicePage({ params }: { params: { id: string } }) {
+export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -12,7 +13,7 @@ export default async function InvoicePage({ params }: { params: { id: string } }
   const db = getTenantDb(organizationId);
 
   const invoice = await db.invoice.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       lease: {
         include: {

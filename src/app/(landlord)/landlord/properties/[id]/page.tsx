@@ -14,15 +14,16 @@ import { redirect } from "next/navigation";
 export default async function LandlordPropertyPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
   }
 
   const [property, performance, units, documents, tenancy, maintenance] = await Promise.all([
-    getLandlordProperty(params.id),
+    getLandlordProperty(id),
     getPropertyPerformance(params.id),
     getPropertyUnits(params.id),
     getPropertyDocuments(params.id),

@@ -39,7 +39,8 @@ export const metadata: Metadata = {
   description: "Manage role permissions and assigned users.",
 };
 
-export default async function RoleDetailsPage({ params }: { params: { id: string } }) {
+export default async function RoleDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -47,7 +48,7 @@ export default async function RoleDetailsPage({ params }: { params: { id: string
   const db = getTenantDb(organizationId);
 
   const roleData = await db.role.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       userRoles: {
         include: {
