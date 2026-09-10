@@ -111,6 +111,7 @@ export async function createProperty(values: any) {
 
     const property = await tenantDb.property.create({
       data: {
+        organizationId,
         propertyName: values.propertyName || values.name,
         propertyCode: values.propertyCode || values.code,
         propertyType: values.propertyType || values.type,

@@ -1,9 +1,9 @@
-"use strict";
+"use server";
 
 import { auth } from "@/auth";
 import { caseService } from "@/features/cases/services/case-service";
 import { revalidatePath } from "next/cache";
-import { CaseStatus, CaseSeverity } from "@prisma/client";
+import type { CaseStatus } from "@prisma/client";
 
 async function getSession() {
   const session = await auth();

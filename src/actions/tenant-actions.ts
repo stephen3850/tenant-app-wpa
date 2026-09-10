@@ -28,9 +28,15 @@ export async function getTenants(organizationId: string) {
 export async function createLease(data: any) {
   try {
     const lease = await prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.findUnique({
+        where: { id: data.tenantId }
+      });
+      if (!tenant) throw new Error("Tenant not found");
+
       const newLease = await tx.lease.create({
         data: {
           ...data,
+          organizationId: tenant.organizationId,
           startDate: new Date(data.startDate),
           endDate: data.endDate ? new Date(data.endDate) : null,
           status: "ACTIVE",
