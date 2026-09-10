@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { changeSuperAdminPassword } from "@/features/admin-profile/actions/admin-profile-actions";
 import { toast } from "sonner";
-import { RefreshCw, ShieldKeyhole } from "lucide-react";
+import { RefreshCw, Shield } from "lucide-react";
 
 export function PasswordForm() {
   const [loading, setLoading] = useState(false);
@@ -71,7 +71,7 @@ export function PasswordForm() {
           className="w-full bg-slate-900 font-black"
           disabled={loading}
         >
-          {loading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <ShieldKeyhole className="mr-2 h-4 w-4" />}
+          {loading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
           Update Password
         </Button>
       </div>

@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   CreditCard,
   FileText,
-  Tool,
+  Wrench,
   ShieldCheck,
   Smartphone,
   MessageSquare
@@ -30,7 +30,7 @@ export default async function FeatureAdoptionPage() {
     },
     {
       name: "Maintenance Tickets",
-      icon: <Tool className="w-5 h-5" />,
+      icon: <Wrench className="w-5 h-5" />,
       adoption: data.adoptionRates.maintenance,
       count: data.maintenanceTickets,
       unit: "Tickets"
