@@ -31,6 +31,7 @@ export default async function DocumentsPage({
     ...docs.map(d => ({
       id: d.id,
       tenantId: d.tenantId,
+      propertyId: undefined as string | undefined,
       category: d.category,
       name: d.name,
       linkedTo: `${d.tenant.firstName} ${d.tenant.lastName}`,
@@ -42,6 +43,7 @@ export default async function DocumentsPage({
     })),
     ...propDocs.map(d => ({
       id: d.id,
+      tenantId: undefined as string | undefined,
       propertyId: d.propertyId,
       category: d.category,
       name: d.name,
