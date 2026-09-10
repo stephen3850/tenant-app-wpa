@@ -11,7 +11,8 @@ import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
-export default async function PropertyRevenueDetailPage({ params }: { params: { id: string } }) {
+export default async function PropertyRevenueDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -19,7 +20,7 @@ export default async function PropertyRevenueDetailPage({ params }: { params: { 
 
   const [property, organization] = await Promise.all([
     db.property.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     }),
     db.organization.findUnique({
       where: { id: organizationId },

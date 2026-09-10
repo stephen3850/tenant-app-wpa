@@ -14,7 +14,7 @@ import {
     Settings2Icon
 } from "lucide-react";
 
-export default async function OrganizationDetailsPage({ params }: { params: { id: string } }) {
+export default async function OrganizationDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const org = await getOrganization(id);
   const successInsights = await getCustomerSuccessInsights(id);

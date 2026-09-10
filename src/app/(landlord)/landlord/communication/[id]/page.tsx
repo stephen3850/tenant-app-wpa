@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-export default async function ConversationDetailsPage({ params }: { params: { id: string } }) {
+export default async function ConversationDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const conversation = await getLandlordConversation(id);
   const session = await auth();

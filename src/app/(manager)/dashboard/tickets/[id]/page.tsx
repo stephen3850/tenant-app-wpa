@@ -8,12 +8,13 @@ import { redirect, notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export default async function TicketDetailsPage({ params }: { params: { id: string } }) {
+export default async function TicketDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as any;
-  const ticket = await ticketRepository.findById(params.id, user.organizationId);
+  const ticket = await ticketRepository.findById(id, user.organizationId);
 
   if (!ticket) notFound();
 

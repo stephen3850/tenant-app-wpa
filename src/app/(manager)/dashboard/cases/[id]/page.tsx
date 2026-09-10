@@ -10,12 +10,13 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileIcon, Gavel, ClockIcon } from "lucide-react";
 
-export default async function CaseDetailsPage({ params }: { params: { id: string } }) {
+export default async function CaseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as any;
-  const caseRecord = await caseRepository.findById(params.id, user.organizationId);
+  const caseRecord = await caseRepository.findById(id, user.organizationId);
 
   if (!caseRecord) notFound();
 

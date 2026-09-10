@@ -34,11 +34,12 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export default async function LandlordProfilePage({ params }: { params: { id: string } }) {
+export default async function LandlordProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const landlordId = params.id;
+  const landlordId = id;
   const organizationId = (session.user as any).organizationId;
 
   const landlord = await db.user.findUnique({
