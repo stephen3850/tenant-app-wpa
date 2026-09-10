@@ -19,15 +19,16 @@ export const dynamic = "force-dynamic";
 export default async function OpeningBalanceReportPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const organizationId = (session.user as any).organizationId;
 
   // 1. DATA WIRING: Extract and Validate Parameters
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : "all";
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : "all";
   const unitId = typeof searchParams.unitId === "string" ? searchParams.unitId : "all";
   const year = typeof searchParams.year === "string" ? searchParams.year : "2026";
 

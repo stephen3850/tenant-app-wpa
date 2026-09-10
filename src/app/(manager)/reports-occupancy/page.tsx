@@ -26,8 +26,9 @@ export const dynamic = "force-dynamic";
 export default async function OccupancyReportPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 

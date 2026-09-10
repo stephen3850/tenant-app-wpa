@@ -23,13 +23,14 @@ export const dynamic = "force-dynamic";
 export default async function PaymentsByBankReportPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const organizationId = (session.user as any).organizationId;
-  const year = typeof searchParams.year === "string" ? parseInt(searchParams.year) : 2026;
+  const year = typeof params.year === "string" ? parseInt(params.year) : 2026;
 
   // Fetch all completed payments for the selected year
   const payments = await db.payment.findMany({

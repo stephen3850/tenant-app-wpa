@@ -7,8 +7,9 @@ import { DocumentsView } from "@/features/documents/components/documents-view";
 export default async function DocumentsPage({
   searchParams,
 }: {
-  searchParams: { tenantId?: string; propertyId?: string };
+  searchParams: Promise<{ tenantId?: string; propertyId?: string }>;
 }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
