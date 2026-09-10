@@ -34,10 +34,10 @@ export default async function TenantStatementsReportPage({
   const organizationId = (session.user as any).organizationId;
 
   // 1. DATA WIRING: Extract and Validate Parameters
-  const search = typeof searchParams.search === "string" ? searchParams.search : "";
-  const status = typeof searchParams.status === "string" ? searchParams.status : "active";
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : "all";
-  const rows = typeof searchParams.rows === "string" ? searchParams.rows : "100";
+  const search = typeof params.search === "string" ? params.search : "";
+  const status = typeof params.status === "string" ? params.status : "active";
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : "all";
+  const rows = typeof params.rows === "string" ? params.rows : "100";
 
   // 2. PURGE DUMMY DATA: Actual DB queries
   const [properties, tenantsData] = await Promise.all([

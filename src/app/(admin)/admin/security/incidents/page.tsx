@@ -21,7 +21,8 @@ import {
 import Link from "next/link";
 
 export default async function SecurityIncidentsPage({ searchParams }: any) {
-  const { incidents, total } = await getSecurityIncidents(searchParams);
+  const params = await searchParams;
+  const { incidents, total } = await getSecurityIncidents(params);
 
   return (
     <div className="space-y-8">

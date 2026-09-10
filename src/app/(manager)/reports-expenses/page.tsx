@@ -34,9 +34,9 @@ export default async function ExpenseReportPage({
 
   // 1. END-TO-END DATA WIRING
   const propertyId = typeof params.propertyId === "string" ? params.propertyId : undefined;
-  const categoryId = typeof searchParams.categoryId === "string" ? searchParams.categoryId : undefined;
-  const start = typeof searchParams.start === "string" ? parseISO(searchParams.start) : startOfMonth(new Date());
-  const end = typeof searchParams.end === "string" ? parseISO(searchParams.end) : endOfMonth(new Date());
+  const categoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;
+  const start = typeof params.start === "string" ? parseISO(params.start) : startOfMonth(new Date());
+  const end = typeof params.end === "string" ? parseISO(params.end) : endOfMonth(new Date());
 
   // 2. PURGE DUMMY DATA: Actual DB queries
   const [properties, categories, expenses] = await Promise.all([

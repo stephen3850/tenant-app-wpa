@@ -29,8 +29,8 @@ export default async function OpeningBalanceReportPage({
 
   // 1. DATA WIRING: Extract and Validate Parameters
   const propertyId = typeof params.propertyId === "string" ? params.propertyId : "all";
-  const unitId = typeof searchParams.unitId === "string" ? searchParams.unitId : "all";
-  const year = typeof searchParams.year === "string" ? searchParams.year : "2026";
+  const unitId = typeof params.unitId === "string" ? params.unitId : "all";
+  const year = typeof params.year === "string" ? params.year : "2026";
 
   // 2. PURGE DUMMY DATA: Actual DB queries
   const [properties, units, organization] = await Promise.all([

@@ -35,8 +35,8 @@ export default async function OccupancyReportPage({
   const organizationId = (session.user as any).organizationId;
 
   // 1. DATA WIRING: Extract Params
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : undefined;
-  const asOfDate = typeof searchParams.asOf === "string" ? parseISO(searchParams.asOf) : new Date();
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : undefined;
+  const asOfDate = typeof params.asOf === "string" ? parseISO(params.asOf) : new Date();
 
   // 2. PURGE DUMMY DATA: Actual DB queries
   const [properties, units] = await Promise.all([

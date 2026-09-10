@@ -19,7 +19,8 @@ import {
 import Link from "next/link";
 
 export default async function SupportCasesPage({ searchParams }: any) {
-  const { cases, total } = await getSupportCases(searchParams);
+  const params = await searchParams;
+  const { cases, total } = await getSupportCases(params);
 
   return (
     <div className="space-y-8">

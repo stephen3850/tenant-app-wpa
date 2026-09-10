@@ -22,7 +22,8 @@ import {
 import Link from "next/link";
 
 export default async function AuditLogsPage({ searchParams }: any) {
-  const { logs, total } = await getAuditLogs(searchParams);
+  const params = await searchParams;
+  const { logs, total } = await getAuditLogs(params);
 
   return (
     <div className="space-y-8">

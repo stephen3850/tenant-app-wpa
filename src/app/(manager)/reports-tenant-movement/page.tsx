@@ -34,9 +34,9 @@ export default async function TenantMovementReportPage({
   const organizationId = (session.user as any).organizationId;
 
   // 1. DATA WIRING: Extract Params
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : undefined;
-  const start = typeof searchParams.start === "string" ? parseISO(searchParams.start) : startOfMonth(new Date());
-  const end = typeof searchParams.end === "string" ? parseISO(searchParams.end) : endOfMonth(new Date());
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : undefined;
+  const start = typeof params.start === "string" ? parseISO(params.start) : startOfMonth(new Date());
+  const end = typeof params.end === "string" ? parseISO(params.end) : endOfMonth(new Date());
 
   // 2. PURGE DUMMY DATA: Actual DB queries
   const properties = await db.property.findMany({

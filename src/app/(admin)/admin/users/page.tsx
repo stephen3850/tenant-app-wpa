@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default async function UsersDirectoryPage({ searchParams }: any) {
-  const { users, total } = await getUsers(searchParams);
+  const params = await searchParams;
+  const { users, total } = await getUsers(params);
 
   return (
     <div className="space-y-8">

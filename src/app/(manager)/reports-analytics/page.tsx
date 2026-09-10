@@ -28,9 +28,9 @@ export default async function AnalyticsReportPage({
   });
 
   // 1. END-TO-END DATA WIRING: Extract and Validate Parameters
-  const propertyId = typeof searchParams.propertyId === "string" ? searchParams.propertyId : "all";
-  const startStr = typeof searchParams.start === "string" ? searchParams.start : format(startOfMonth(new Date()), "yyyy-MM-dd");
-  const endStr = typeof searchParams.end === "string" ? searchParams.end : format(endOfMonth(new Date()), "yyyy-MM-dd");
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : "all";
+  const startStr = typeof params.start === "string" ? params.start : format(startOfMonth(new Date()), "yyyy-MM-dd");
+  const endStr = typeof params.end === "string" ? params.end : format(endOfMonth(new Date()), "yyyy-MM-dd");
 
   const start = parseISO(startStr);
   const end = parseISO(endStr);
