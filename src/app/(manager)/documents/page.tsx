@@ -54,11 +54,11 @@ export default async function DocumentsPage({
     }))
   ];
 
-  if (searchParams.tenantId) {
-    allDocuments = allDocuments.filter(d => d.tenantId === searchParams.tenantId);
+  if (params.tenantId) {
+    allDocuments = allDocuments.filter(d => d.tenantId === params.tenantId);
   }
-  if (searchParams.propertyId) {
-    allDocuments = allDocuments.filter(d => d.propertyId === searchParams.propertyId);
+  if (params.propertyId) {
+    allDocuments = allDocuments.filter(d => d.propertyId === params.propertyId);
   }
 
   allDocuments.sort((a, b) => new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime());
