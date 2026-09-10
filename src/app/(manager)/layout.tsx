@@ -16,6 +16,12 @@ export default async function ManagerLayout({
     redirect("/login");
   }
 
+  // Redirect Super Admins out of the manager layout
+  const roleNames = (session.user as any).roles || [];
+  if (roleNames.includes("SUPER_ADMIN") || !session.user.organizationId) {
+    redirect("/admin/dashboard");
+  }
+
   const organizationStatus = (session.user as any).organizationStatus;
 
   return (

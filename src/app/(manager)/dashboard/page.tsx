@@ -15,7 +15,8 @@ export default async function DashboardPage() {
     redirect("/portal");
   }
 
-  if (roleNames.includes("PLATFORM_ADMIN")) {
+  // Super Admin check: either explicitly by role name or by organizationId being null
+  if (roleNames.includes("PLATFORM_ADMIN") || roleNames.includes("SUPER_ADMIN") || !session.user.organizationId) {
     redirect("/admin/dashboard");
   }
 

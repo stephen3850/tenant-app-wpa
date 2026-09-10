@@ -51,7 +51,11 @@ export default {
         }
 
         return null;
-      },
-    }),
-  ],
+      } catch (err) {
+        console.error("Auth Error:", err);
+        return null;
+      }
+    },
+  }),
+],
 } satisfies NextAuthConfig;

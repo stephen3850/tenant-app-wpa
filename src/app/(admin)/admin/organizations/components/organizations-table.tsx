@@ -86,8 +86,8 @@ export function OrganizationsTable({ organizations }: { organizations: any[] }) 
             </TableCell>
             <TableCell className="text-center">
                 <div className="flex flex-col">
-                    <span className="text-xs font-black text-slate-900">{org._count.properties} Props</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">{org._count.users} Users</span>
+                    <span className="text-xs font-black text-slate-900">{org._count.properties} Props • {org._count.tenants} Tenants</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">{org._count.users} Users • {org._count.leases} Leases</span>
                 </div>
             </TableCell>
             <TableCell className="text-center">

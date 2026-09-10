@@ -18,11 +18,13 @@ export async function login(values: any) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
-          return { error: "Invalid credentials!" };
+          return { error: "Invalid email or password!" };
         default:
-          return { error: "Something went wrong!" };
+          return { error: "Something went wrong with the login process." };
       }
     }
+    // Very important: Next.js redirects work by throwing an error.
+    // We MUST re-throw it so Next.js can handle the redirect.
     throw error;
   }
 }

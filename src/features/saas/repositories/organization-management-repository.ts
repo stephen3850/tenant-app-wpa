@@ -41,6 +41,8 @@ export class OrganizationManagementRepository {
           select: {
             users: true,
             properties: true,
+            tenants: true,
+            leases: true,
           }
         },
         subscription: {
