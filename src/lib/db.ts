@@ -12,7 +12,11 @@ if (typeof globalThis.WebSocket === 'undefined') {
   neonConfig.webSocketConstructor = ws;
 }
 
-const connectionString = `${process.env.DATABASE_URL}`;
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined. Please check your environment variables.");
+}
 
 const pool = new Pool({ connectionString });
 const adapter = new PrismaNeon(pool as any);
