@@ -12,18 +12,18 @@ if (typeof globalThis.WebSocket === 'undefined') {
   neonConfig.webSocketConstructor = ws;
 }
 
-const connectionString = process.env.DATABASE_URL;
+const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
 // Strict check for valid connection string
-if (!connectionString || connectionString.trim() === "" || connectionString === "undefined") {
+if (!url || url.trim() === "" || url === "undefined") {
   throw new Error(
-    "FATAL: DATABASE_URL is missing or invalid. " +
+    "FATAL: DATABASE_URL (or POSTGRES_URL) is missing or invalid. " +
     "Ensure the variable is set in Vercel Environment Variables and the project is REDEPLOYED."
   );
 }
 
 const pool = new Pool({
-  connectionString,
+  connectionString: url,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
