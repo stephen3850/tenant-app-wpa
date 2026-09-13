@@ -95,7 +95,7 @@ export default function RegisterPage() {
         <div className="flex w-full flex-col justify-center p-8 md:p-16 lg:w-1/2">
           <div className="mx-auto w-full max-w-md">
             <div className="mb-10 text-center lg:text-left">
-              <h2 className="text-3xl font-extrabold tracking-tight text-[#111827]">Create Account</h2>
+              <h2 className="text-3xl font-extrabold tracking-tight text-[#111827]">Create Account <span className="text-[10px] text-gray-300">v2</span></h2>
               <p className="mt-3 text-gray-500 font-medium text-sm">Fill in the details to get started with your 14-day free trial.</p>
             </div>
 
