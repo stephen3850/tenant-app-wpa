@@ -12,24 +12,39 @@ if (typeof globalThis.WebSocket === 'undefined') {
   neonConfig.webSocketConstructor = ws;
 }
 
-const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const getConnectionString = () => {
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!url || url.trim() === "" || url === "undefined") {
+    return null;
+  }
+  return url.trim();
+};
 
-// Strict check for valid connection string
-if (!url || url.trim() === "" || url === "undefined") {
-  throw new Error(
-    "FATAL: DATABASE_URL (or POSTGRES_URL) is missing or invalid. " +
-    "Ensure the variable is set in Vercel Environment Variables and the project is REDEPLOYED."
-  );
-}
+const createPrismaClient = () => {
+  const connectionString = getConnectionString();
 
-const pool = new Pool({
-  connectionString: url,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
-const adapter = new PrismaNeon(pool as any);
+  if (!connectionString) {
+    // Return a proxy that throws on any access
+    return new Proxy({} as PrismaClient, {
+      get() {
+        throw new Error(
+          "DATABASE_URL is missing. Please set it in Vercel Environment Variables and REDEPLOY."
+        );
+      }
+    });
+  }
 
-export const db = globalThis.prisma || new PrismaClient({ adapter });
+  const pool = new Pool({
+    connectionString,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+
+  const adapter = new PrismaNeon(pool as any);
+  return new PrismaClient({ adapter });
+};
+
+export const db = globalThis.prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalThis.prisma = db;
