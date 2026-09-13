@@ -111,8 +111,13 @@ export async function register(values: any) {
 
     return { success: "Account created successfully! You can now sign in." };
   } catch (error: any) {
-    console.error("Registration Error:", error);
-    return { error: error.message || "Something went wrong. Please try again." };
+    console.error("[AUTH_ACTION_ERROR] Registration Failure:", error);
+    // Add a specific prefix to the error message returned to the UI to verify the code version
+    const uiErrorMessage = error.message?.includes("DATABASE")
+      ? `DB_CONNECTION_FAILED: ${error.message}`
+      : error.message || "An unexpected error occurred during registration.";
+
+    return { error: uiErrorMessage };
   }
 }
 
