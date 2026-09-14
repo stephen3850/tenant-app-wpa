@@ -180,6 +180,9 @@ export default function RegisterPage() {
                   Sign In
                 </Link>
               </p>
+              <p className="mt-4 text-[10px] text-gray-400 font-mono">
+                System Version: 2.1.2-Atomic (Production Fix Active)
+              </p>
             </div>
           </div>
         </div>
