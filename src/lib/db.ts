@@ -14,21 +14,21 @@ if (typeof globalThis.WebSocket === 'undefined') {
 
 const getConnectionString = () => {
   // Check for ALL possible Vercel/Neon environment variables to be extremely thorough
-  const url = process.env.DATABASE_URL ||
-              process.env.POSTGRES_URL ||
-              process.env.POSTGRES_PRISMA_URL ||
-              process.env.POSTGRES_URL_NON_POOLING ||
-              process.env.NEON_DATABASE_URL;
-
   if (!url) {
-    console.error("[DB_INIT] Error: No database connection string found in process.env");
+    console.error("[DB_INIT] CRITICAL: DATABASE_URL is completely missing from process.env");
     return null;
   }
 
-  // Handle potential quoting issues and hidden characters common in Vercel/Neon copy-pastes
-  const cleaned = url.trim()
+  // Handle potential quoting issues and hidden characters
+  // Also check if Vercel has passed a literal "undefined" string
+  let cleaned = url.trim()
     .replace(/^["']|["']$/g, "")
     .replace(/[\r\n]/g, "");
+
+  if (cleaned === "undefined" || cleaned === "null" || cleaned === "") {
+    console.error("[DB_INIT] CRITICAL: DATABASE_URL is set to a placeholder string:", cleaned);
+    return null;
+  }
 
   if (!cleaned || cleaned === "undefined" || cleaned === "null" || cleaned.length < 10) {
     console.error("[DB_INIT] Error: Database connection string is invalid or effectively empty.");
