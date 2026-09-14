@@ -14,6 +14,12 @@ if (typeof globalThis.WebSocket === 'undefined') {
 
 const getConnectionString = () => {
   // Check for ALL possible Vercel/Neon environment variables to be extremely thorough
+  const url = process.env.DATABASE_URL ||
+              process.env.POSTGRES_URL ||
+              process.env.POSTGRES_PRISMA_URL ||
+              process.env.POSTGRES_URL_NON_POOLING ||
+              process.env.NEON_DATABASE_URL;
+
   if (!url) {
     console.error("[DB_INIT] CRITICAL: DATABASE_URL is completely missing from process.env");
     return null;
