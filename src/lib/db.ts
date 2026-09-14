@@ -76,12 +76,6 @@ const createPrismaClient = () => {
     // Create Prisma client with the Neon adapter
     return new PrismaClient({
       adapter,
-      // Also pass the datasource URL to the client to ensure the engine is correctly aware of the target
-      datasources: {
-        db: {
-          url: connectionString
-        }
-      },
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
     });
   } catch (err: any) {
