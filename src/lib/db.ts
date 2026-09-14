@@ -50,14 +50,14 @@ const createPrismaClient = () => {
       return null as any;
     }
 
-    const envKeys = Object.keys(process.env).filter(key =>
-      key.includes('DATABASE') || key.includes('POSTGRES') || key.includes('NEON')
-    ).join(', ');
+    // LIST ALL ENV KEYS (not values) to debug Vercel visibility
+    const allEnvKeys = Object.keys(process.env).sort().join(', ');
+    console.error(`[DB_INIT] CRITICAL ERROR: DATABASE_URL is missing. Available env keys: ${allEnvKeys}`);
 
     throw new Error(
-      `DATABASE_CONFIGURATION_ERROR: No valid database connection string was found at runtime. ` +
-      `Available environment keys: [${envKeys || 'None'}]. ` +
-      `Please ensure DATABASE_URL is set in Vercel Settings > Environment Variables.`
+      `DATABASE_CONFIGURATION_ERROR: The database connection string (DATABASE_URL) is missing or empty in the production environment. ` +
+      `Please check Vercel Settings > Environment Variables. ` +
+      `Available environment keys detected: [${allEnvKeys.substring(0, 100)}...]`
     );
   }
 
