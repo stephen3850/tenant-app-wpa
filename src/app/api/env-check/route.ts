@@ -7,17 +7,18 @@ export async function GET() {
 
   return NextResponse.json({
     status: "ok",
-    version: "2.1.2-atomic",
-    timestamp: "2026-09-14 12:45 UTC",
+    version: "2.1.3-seed",
+    timestamp: new Date().toISOString(),
     env: {
       DATABASE_URL_SET: !!process.env.DATABASE_URL,
-      DATABASE_URL_LENGTH: process.env.DATABASE_URL?.length || 0,
-      DATABASE_URL_START: process.env.DATABASE_URL?.substring(0, 15) + "...",
       POSTGRES_URL_SET: !!process.env.POSTGRES_URL,
-      POSTGRES_URL_LENGTH: process.env.POSTGRES_URL?.length || 0,
+      AUTH_SECRET_SET: !!process.env.AUTH_SECRET,
+      NEXTAUTH_SECRET_SET: !!process.env.NEXTAUTH_SECRET,
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+      NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
       NODE_ENV: process.env.NODE_ENV,
       VERCEL_ENV: process.env.VERCEL_ENV || "unknown"
     },
-    message: "If you see version '2.1.2-atomic', the latest code is live."
+    message: "If AUTH_SECRET_SET is false, NextAuth will fail in production."
   });
 }
