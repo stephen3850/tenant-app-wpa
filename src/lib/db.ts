@@ -85,9 +85,28 @@ const createPrismaClient = () => {
   }
 };
 
-// Use a getter to prevent initialization during module load (especially during build)
+// Use a proxy to ensure the database client is ONLY initialized when first accessed.
+// This prevents build-time crashes and allows us to capture errors at the exact moment of use.
+const createLazyDb = () => {
+  let _instance: PrismaClient | null = null;
+
+  return new Proxy({} as PrismaClient, {
+    get(target, prop, receiver) {
+      // Return the constructor name if requested (useful for some libraries)
+      if (prop === 'constructor') return PrismaClient;
+
+      if (!_instance) {
+        _instance = createPrismaClient();
+      }
+      // @ts-ignore
+      const value = Reflect.get(_instance, prop, receiver);
+      return typeof value === 'function' ? value.bind(_instance) : value;
+    }
+  });
+};
+
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-export const db = globalForPrisma.prisma || createPrismaClient();
+export const db = globalForPrisma.prisma || createLazyDb();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;

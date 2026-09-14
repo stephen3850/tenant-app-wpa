@@ -7,6 +7,8 @@ export async function GET() {
 
   return NextResponse.json({
     status: "ok",
+    version: "2.1.2-atomic",
+    timestamp: "2026-09-14 12:45 UTC",
     env: {
       DATABASE_URL_SET: !!process.env.DATABASE_URL,
       DATABASE_URL_LENGTH: process.env.DATABASE_URL?.length || 0,
@@ -16,6 +18,6 @@ export async function GET() {
       NODE_ENV: process.env.NODE_ENV,
       VERCEL_ENV: process.env.VERCEL_ENV || "unknown"
     },
-    message: "If the values above are 0 or false, check your Vercel Dashboard Settings."
+    message: "If you see version '2.1.2-atomic', the latest code is live."
   });
 }
