@@ -39,10 +39,17 @@ const getConnectionString = () => {
 };
 
 const createPrismaClient = () => {
+  // During Next.js build phase, process.env.DATABASE_URL might be missing.
+  // We should not throw an error during the build, only at runtime.
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
   const connectionString = getConnectionString();
 
   if (!connectionString) {
-    // Collect all database-related env keys for diagnostics (names only, no values for security)
+    if (isBuildPhase) {
+      console.warn("[DB_INIT] Warning: No connection string found during build phase. Skipping initialization.");
+      return null as any;
+    }
+
     const envKeys = Object.keys(process.env).filter(key =>
       key.includes('DATABASE') || key.includes('POSTGRES') || key.includes('NEON')
     ).join(', ');
@@ -50,41 +57,37 @@ const createPrismaClient = () => {
     throw new Error(
       `DATABASE_CONFIGURATION_ERROR: No valid database connection string was found at runtime. ` +
       `Available environment keys: [${envKeys || 'None'}]. ` +
-      `Please ensure DATABASE_URL is set in Vercel Settings > Environment Variables and that the project has been redeployed.`
+      `Please ensure DATABASE_URL is set in Vercel Settings > Environment Variables.`
     );
   }
 
   try {
-    // Neon Serverless specific pool configuration.
-    // We use the connectionString directly to ensure pg/neon-serverless parses it correctly.
     const pool = new Pool({
       connectionString: connectionString,
-      // For Serverless environments, we keep the pool size small to avoid hitting Neon limits
       max: 2,
       connectionTimeoutMillis: 10000,
-      // Explicitly enable SSL
       ssl: true
     });
 
-    // Handle idle client errors to prevent crashes in long-running serverless functions
     pool.on('error', (err) => {
       console.error('Unexpected error on idle database client', err);
     });
 
     const adapter = new PrismaNeon(pool as any);
 
-    // Create Prisma client with the Neon adapter
     return new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
     });
   } catch (err: any) {
-    // Provide safe diagnostic info: string prefix + error message
-    const prefix = connectionString.substring(0, 15);
+    const prefix = connectionString ? connectionString.substring(0, 15) : "None";
     throw new Error(`DATABASE_DRIVER_ERROR: ${err.message} (Connection string prefix: ${prefix}...)`);
   }
 };
 
-export const db = globalThis.prisma || createPrismaClient();
+// Use a getter to prevent initialization during module load (especially during build)
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
-if (process.env.NODE_ENV !== "production") globalThis.prisma = db;
+export const db = globalForPrisma.prisma || createPrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
