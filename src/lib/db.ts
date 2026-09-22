@@ -97,15 +97,17 @@ const createLazyDb = () => {
   let _instance: PrismaClient | null = null;
 
   return new Proxy({} as PrismaClient, {
-    get(target, prop, receiver) {
+    get(target, prop) {
       // Return the constructor name if requested (useful for some libraries)
       if (prop === 'constructor') return PrismaClient;
 
       if (!_instance) {
         _instance = createPrismaClient();
       }
-      // @ts-ignore
-      const value = Reflect.get(_instance, prop, receiver);
+
+      // We do NOT pass 'receiver' to Reflect.get to ensure getters on _instance
+      // correctly use _instance as their 'this' context, not the proxy.
+      const value = Reflect.get(_instance, prop);
       return typeof value === 'function' ? value.bind(_instance) : value;
     }
   });
