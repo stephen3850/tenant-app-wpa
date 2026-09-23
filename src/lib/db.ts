@@ -105,6 +105,10 @@ const createLazyDb = () => {
         _instance = createPrismaClient();
       }
 
+      if (!_instance) {
+        return undefined;
+      }
+
       // We do NOT pass 'receiver' to Reflect.get to ensure getters on _instance
       // correctly use _instance as their 'this' context, not the proxy.
       const value = Reflect.get(_instance, prop);
