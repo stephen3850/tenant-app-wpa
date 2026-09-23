@@ -12,32 +12,43 @@ if (typeof globalThis.WebSocket === 'undefined') {
   neonConfig.webSocketConstructor = ws;
 }
 
+const isValidPostgresUrl = (str: string): boolean => {
+  try {
+    const parsed = new URL(str);
+    return (
+      (parsed.protocol === "postgres:" || parsed.protocol === "postgresql:") &&
+      Boolean(parsed.hostname && parsed.hostname.length > 0)
+    );
+  } catch {
+    return false;
+  }
+};
+
 const getConnectionString = () => {
   // Check for ALL possible Vercel/Neon environment variables to be extremely thorough
-  const url = process.env.DATABASE_URL ||
-              process.env.POSTGRES_URL ||
-              process.env.POSTGRES_PRISMA_URL ||
-              process.env.POSTGRES_URL_NON_POOLING ||
-              process.env.NEON_DATABASE_URL;
+  const rawUrl = process.env.DATABASE_URL ||
+                 process.env.POSTGRES_URL ||
+                 process.env.POSTGRES_PRISMA_URL ||
+                 process.env.POSTGRES_URL_NON_POOLING ||
+                 process.env.NEON_DATABASE_URL;
 
-  if (!url) {
+  if (!rawUrl) {
     console.error("[DB_INIT] CRITICAL: DATABASE_URL is completely missing from process.env");
     return null;
   }
 
-  // Handle potential quoting issues and hidden characters
-  // Also check if Vercel has passed a literal "undefined" string
-  let cleaned = url.trim()
+  // Handle potential quoting issues, whitespace, hidden characters
+  let cleaned = rawUrl.trim()
     .replace(/^["']|["']$/g, "")
     .replace(/[\r\n]/g, "");
 
-  if (cleaned === "undefined" || cleaned === "null" || cleaned === "") {
-    console.error("[DB_INIT] CRITICAL: DATABASE_URL is set to a placeholder string:", cleaned);
+  if (cleaned === "undefined" || cleaned === "null" || cleaned === "" || cleaned.length < 10) {
+    console.error("[DB_INIT] Error: Database connection string is invalid or placeholder:", cleaned);
     return null;
   }
 
-  if (!cleaned || cleaned === "undefined" || cleaned === "null" || cleaned.length < 10) {
-    console.error("[DB_INIT] Error: Database connection string is invalid or effectively empty.");
+  if (!isValidPostgresUrl(cleaned)) {
+    console.error("[DB_INIT] Error: Database connection string is not a valid PostgreSQL URL with a hostname:", cleaned);
     return null;
   }
 
@@ -46,7 +57,7 @@ const getConnectionString = () => {
 
 const createPrismaClient = () => {
   // During Next.js build phase, process.env.DATABASE_URL might be missing.
-  // We should not throw an error during the build, only at runtime.
+  // We should not throw an error during the build, only at runtime when accessed.
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
   const connectionString = getConnectionString();
 
@@ -56,14 +67,12 @@ const createPrismaClient = () => {
       return null as any;
     }
 
-    // LIST ALL ENV KEYS (not values) to debug Vercel visibility
     const allEnvKeys = Object.keys(process.env).sort().join(', ');
-    console.error(`[DB_INIT] CRITICAL ERROR: DATABASE_URL is missing. Available env keys: ${allEnvKeys}`);
+    console.error(`[DB_INIT] CRITICAL ERROR: DATABASE_URL is missing or invalid. Available env keys: ${allEnvKeys}`);
 
     throw new Error(
-      `DATABASE_CONFIGURATION_ERROR: The database connection string (DATABASE_URL) is missing or empty in the production environment. ` +
-      `Please check Vercel Settings > Environment Variables. ` +
-      `Available environment keys detected: [${allEnvKeys.substring(0, 100)}...]`
+      `DATABASE_CONFIGURATION_ERROR: The database connection string (DATABASE_URL) is missing or invalid in the environment. ` +
+      `Please set DATABASE_URL in Vercel Settings > Environment Variables or in your local .env file.`
     );
   }
 
@@ -98,7 +107,6 @@ const createLazyDb = () => {
 
   return new Proxy({} as PrismaClient, {
     get(target, prop) {
-      // Return the constructor name if requested (useful for some libraries)
       if (prop === 'constructor') return PrismaClient;
 
       if (!_instance) {
@@ -106,7 +114,10 @@ const createLazyDb = () => {
       }
 
       if (!_instance) {
-        return undefined;
+        throw new Error(
+          "DATABASE_URL_NOT_SET: No valid DATABASE_URL found in environment variables. " +
+          "Please configure DATABASE_URL in Vercel Settings > Environment Variables or in your local .env file."
+        );
       }
 
       // We do NOT pass 'receiver' to Reflect.get to ensure getters on _instance

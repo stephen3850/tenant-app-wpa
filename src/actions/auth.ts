@@ -113,8 +113,18 @@ export async function register(values: any) {
   } catch (error: any) {
     console.error("[AUTH_ACTION_ERROR] Registration Failure:", error);
 
-    // ATOMIC FIX: Capture the raw pg error and force a prefix so we know it's being caught here
     const message = error.message || "";
+
+    if (
+      message.includes("DATABASE_URL_NOT_SET") ||
+      message.includes("DATABASE_CONFIGURATION_ERROR") ||
+      message.includes("No database host or connection string")
+    ) {
+      return {
+        error: "Database configuration error: DATABASE_URL is missing or invalid in environment variables. Please set DATABASE_URL in Vercel Settings > Environment Variables or in your local .env file."
+      };
+    }
+
     const isDbError = message.toLowerCase().includes("database") ||
                       message.toLowerCase().includes("connection") ||
                       message.toLowerCase().includes("pool") ||
