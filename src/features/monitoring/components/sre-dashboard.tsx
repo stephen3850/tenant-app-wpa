@@ -85,7 +85,7 @@ export function SREDashboard() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm font-medium">PostgreSQL (Supabase)</span>
+                  <span className="text-sm font-medium">PostgreSQL (Neon)</span>
                 </div>
                 <Badge variant="outline" className="text-emerald-500 border-emerald-500">Operational</Badge>
               </div>
