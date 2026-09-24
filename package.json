@@ -12,9 +12,6 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "db:admin": "npx tsx prisma/create-super-admin.ts"
   },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
     "@hookform/resolvers": "^3.9.1",
