@@ -273,6 +273,82 @@ export class TenantService {
     const user = await this.getSession();
     return tenantRepository.getStats(user.organizationId);
   }
+
+  async generateTenantLogin(tenantId: string) {
+    const user = await this.getSession();
+    const orgId = user.organizationId;
+    await checkPermission("update", "tenant");
+
+    const tenant = await tenantRepository.findById(tenantId, orgId);
+    if (!tenant) throw new Error("Tenant not found");
+
+    if (!tenant.email) {
+      throw new Error("Tenant email is missing. Please update tenant profile with an email address first.");
+    }
+
+    const defaultPassword = tenant.phone || "Tenant@123456";
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+    let userAccount = await db.user.findUnique({
+      where: { email: tenant.email }
+    });
+
+    if (!userAccount) {
+      userAccount = await db.user.create({
+        data: {
+          name: `${tenant.firstName} ${tenant.lastName}`,
+          email: tenant.email,
+          password: hashedPassword,
+          phone: tenant.phone,
+          organizationId: orgId,
+          status: "ACTIVE",
+        }
+      });
+
+      const tenantRole = await db.role.findFirst({
+        where: { name: "TENANT", organizationId: null }
+      });
+
+      if (tenantRole) {
+        await db.userRole.create({
+          data: {
+            userId: userAccount.id,
+            roleId: tenantRole.id
+          }
+        });
+      }
+    } else {
+      // Reset password to default phone
+      await db.user.update({
+        where: { id: userAccount.id },
+        data: {
+          password: hashedPassword,
+          status: "ACTIVE"
+        }
+      });
+    }
+
+    // Link user to tenant
+    await db.tenant.update({
+      where: { id: tenant.id },
+      data: { userId: userAccount.id }
+    });
+
+    await createAuditLog({
+      action: "GENERATE_TENANT_LOGIN",
+      entity: "Tenant",
+      entityId: tenant.id,
+      userId: user.id,
+      organizationId: orgId
+    });
+
+    return {
+      success: true,
+      email: tenant.email,
+      defaultPassword,
+      userName: `${tenant.firstName} ${tenant.lastName}`
+    };
+  }
 }
 
 export const tenantService = new TenantService();

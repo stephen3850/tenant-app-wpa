@@ -75,3 +75,14 @@ export async function getTenantStats() {
     throw new Error(error.message);
   }
 }
+
+export async function generateTenantLoginAction(id: string) {
+  try {
+    const result = await tenantService.generateTenantLogin(id);
+    revalidatePath(`/tenants/${id}`);
+    revalidatePath("/tenants");
+    return { ...result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

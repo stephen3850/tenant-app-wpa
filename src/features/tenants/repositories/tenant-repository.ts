@@ -67,6 +67,7 @@ export class TenantRepository {
         organizationId,
       },
       include: {
+        user: true,
         leases: {
           include: {
             unit: {

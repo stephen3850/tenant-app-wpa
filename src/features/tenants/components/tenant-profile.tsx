@@ -25,8 +25,14 @@ import {
   FileMinus,
   FolderOpen,
   Pencil,
-  Trash2
+  Trash2,
+  Copy,
+  Loader2,
+  Lock,
+  UserCheck
 } from "lucide-react";
+import { generateTenantLoginAction } from "@/features/tenants/actions/tenant-actions";
+import { toast } from "sonner";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import {
   Table,
@@ -69,6 +75,31 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
   const [isLeaseOpen, setIsLeaseOpen] = React.useState(false);
   const [isAssignOpen, setIsAssignOpen] = React.useState(false);
   const [selectedInvoice, setSelectedInvoice] = React.useState<any>(null);
+  const [isGenerating, setIsGenerating] = React.useState(false);
+
+  const handleGenerateLogin = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await generateTenantLoginAction(tenant.id);
+      if (res.success && "email" in res) {
+        toast.success(`Tenant login generated! Email: ${res.email}, Default Password: ${res.defaultPassword}`);
+      } else {
+        toast.error((res as any).error || "Failed to generate login account.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyCredentials = () => {
+    const loginEmail = tenant.user?.email || tenant.email || "No email assigned";
+    const defaultPassword = tenant.phone || "Phone number";
+    const text = `TMS Tenant Portal Credentials:\nURL: ${window.location.origin}/login\nEmail: ${loginEmail}\nDefault Password: ${defaultPassword}`;
+    navigator.clipboard.writeText(text);
+    toast.success("Login credentials copied to clipboard!");
+  };
 
   if (!tenant) return null;
 
@@ -235,6 +266,79 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
           </Card>
         </div>
       </div>
+
+      {/* Tenant Portal Login Credentials Container */}
+      <Card className="shadow-sm border border-slate-200 bg-white rounded-xl">
+        <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-sm">
+              <Key className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-black text-slate-900 tracking-tight">Tenant Portal Login Credentials & Access</CardTitle>
+              <p className="text-[10px] font-medium text-slate-500">Auto-login, self-service portal access & login management for {tenant.firstName} {tenant.lastName}</p>
+            </div>
+          </div>
+          <Badge className={cn(
+            "border-none px-2.5 py-0.5 text-[9px] font-bold uppercase rounded-md",
+            (tenant.userId || tenant.user) ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+          )}>
+            {(tenant.userId || tenant.user) ? "Active Login Linked" : "No Login Linked"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+            <div className="space-y-0.5">
+              <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Login Email</p>
+              <p className="text-xs font-black text-slate-900 truncate">{tenant.user?.email || tenant.email || "No email assigned"}</p>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Default Password</p>
+              <p className="text-xs font-black text-slate-900 truncate">{tenant.phone || "Phone Number"}</p>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Portal Role</p>
+              <p className="text-xs font-black text-emerald-700 truncate">TENANT (Self-Service)</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                onClick={handleGenerateLogin}
+                disabled={isGenerating}
+                className="bg-slate-900 hover:bg-black text-white h-8 px-3.5 text-[10px] font-black rounded-lg shadow-sm gap-1.5"
+              >
+                {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Key className="h-3 w-3" />}
+                {(tenant.userId || tenant.user) ? "Reset Credentials to Phone Number" : "Generate Tenant Login"}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyCredentials}
+                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 h-8 px-3.5 text-[10px] font-black rounded-lg gap-1.5 shadow-sm"
+              >
+                <Copy className="h-3 w-3 text-slate-500" />
+                Copy Credentials
+              </Button>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="bg-[#059669] hover:bg-[#047857] text-white border-none h-8 px-4 text-[10px] font-black rounded-lg shadow-sm gap-1.5"
+            >
+              <Link href="/portal" target="_blank">
+                <UserCircle className="h-3.5 w-3.5" />
+                Login as Tenant (Preview Portal)
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Action Buttons Bar */}
       <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-2">
