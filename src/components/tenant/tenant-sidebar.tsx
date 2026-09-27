@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth";
 
 const navItems = [
-  { label: "Dashboard", href: "/portal", icon: HomeIcon },
+  { label: "Dashboard", href: "/portal/dashboard", icon: HomeIcon },
   { label: "Invoices", href: "/portal/invoices", icon: FileTextIcon },
   { label: "Payments", href: "/portal/payments", icon: CreditCardIcon },
   { label: "Receipts", href: "/portal/receipts", icon: FileCheckIcon },
@@ -45,7 +45,7 @@ export function TenantSidebar({ user }: { user: any }) {
     <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 z-30 bg-white border-r border-[#E2E8F0] shadow-sm">
       {/* Brand Logo Header */}
       <div className="flex h-16 items-center px-6 border-b border-[#E2E8F0] shrink-0">
-        <Link href="/portal" className="flex items-center space-x-3">
+        <Link href="/portal/dashboard" className="flex items-center space-x-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#56A600] text-white shadow-sm">
             <Home className="h-5 w-5" />
           </div>
@@ -68,7 +68,8 @@ export function TenantSidebar({ user }: { user: any }) {
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== "/portal" && pathname.startsWith(item.href));
+            (item.href === "/portal/dashboard" && pathname === "/portal") ||
+            (item.href !== "/portal/dashboard" && pathname.startsWith(item.href));
 
           return (
             <Link

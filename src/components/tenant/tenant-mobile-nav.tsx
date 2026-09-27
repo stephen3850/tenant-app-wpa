@@ -13,13 +13,13 @@ import {
   FileTextIcon,
   FileCheckIcon,
   BarChart3,
-  BellIcon
+  UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Dashboard", href: "/portal", icon: HomeIcon },
+  { label: "Dashboard", href: "/portal/dashboard", icon: HomeIcon },
   { label: "Invoices", href: "/portal/invoices", icon: FileTextIcon },
   { label: "Payments", href: "/portal/payments", icon: CreditCardIcon },
   { label: "Receipts", href: "/portal/receipts", icon: FileCheckIcon },
@@ -27,6 +27,7 @@ const navItems = [
   { label: "Documents", href: "/portal/documents", icon: FileCheckIcon },
   { label: "Tickets", href: "/portal/tickets", icon: WrenchIcon },
   { label: "Reports", href: "/portal/reports", icon: BarChart3 },
+  { label: "My Profile", href: "/portal/profile", icon: UserIcon },
 ];
 
 export function TenantMobileHeaderMenu() {
@@ -52,7 +53,7 @@ export function TenantMobileHeaderMenu() {
           />
           <aside className="fixed inset-y-0 left-0 w-72 bg-white text-slate-900 shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-300">
             <div className="flex h-16 items-center justify-between px-6 border-b">
-              <Link href="/portal" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+              <Link href="/portal/dashboard" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#56A600] text-white shadow-sm">
                   <Home className="h-5 w-5" />
                 </div>
@@ -65,7 +66,11 @@ export function TenantMobileHeaderMenu() {
 
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
               {navItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/portal" && pathname.startsWith(item.href));
+                const isActive =
+                  pathname === item.href ||
+                  (item.href === "/portal/dashboard" && pathname === "/portal") ||
+                  (item.href !== "/portal/dashboard" && pathname.startsWith(item.href));
+
                 return (
                   <Link
                     key={item.href}
@@ -95,7 +100,7 @@ export function TenantMobileBottomNav() {
   const pathname = usePathname();
   // Top 5 primary links for quick bottom nav bar
   const bottomNavItems = [
-    { label: "Home", href: "/portal", icon: HomeIcon },
+    { label: "Home", href: "/portal/dashboard", icon: HomeIcon },
     { label: "Invoices", href: "/portal/invoices", icon: FileTextIcon },
     { label: "Payments", href: "/portal/payments", icon: CreditCardIcon },
     { label: "Tickets", href: "/portal/tickets", icon: WrenchIcon },
@@ -105,7 +110,11 @@ export function TenantMobileBottomNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full border-t bg-white flex justify-around py-2 px-1 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       {bottomNavItems.map((item) => {
-        const isActive = pathname === item.href || (item.href !== "/portal" && pathname.startsWith(item.href));
+        const isActive =
+          pathname === item.href ||
+          (item.href === "/portal/dashboard" && pathname === "/portal") ||
+          (item.href !== "/portal/dashboard" && pathname.startsWith(item.href));
+
         return (
           <Link
             key={item.href}
