@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const pathname = url.pathname;
 
-  // 1. Determine hostname and subdomain
+  // 1. Hostname & Subdomain
   const hostname = request.headers.get("host") || "";
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
   const subdomain = hostname.endsWith(rootDomain)
@@ -24,36 +24,17 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-tenant-id", subdomain);
   }
 
-  // 4. Decode NextAuth v5 session cookies (supporting both production Vercel HTTPS and localhost HTTP cookie names)
-  const cookieName =
-    request.cookies.get("__Secure-authjs.session-token")?.name ||
-    request.cookies.get("authjs.session-token")?.name ||
-    request.cookies.get("__Secure-next-auth.session-token")?.name ||
-    request.cookies.get("next-auth.session-token")?.name;
-
-  const rawCookie =
-    request.cookies.get("__Secure-authjs.session-token")?.value ||
-    request.cookies.get("authjs.session-token")?.value ||
-    request.cookies.get("__Secure-next-auth.session-token")?.value ||
-    request.cookies.get("next-auth.session-token")?.value;
+  // 4. Check session cookie existence (supporting production Vercel HTTPS & local HTTP)
+  const allCookies = request.cookies.getAll();
+  const sessionCookie = allCookies.find((c) =>
+    c.name.includes("session-token") || c.name.includes("authjs") || c.name.includes("next-auth")
+  );
+  const rawCookie = sessionCookie?.value;
 
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
   let token = null;
-  if (cookieName) {
-    try {
-      token = await getToken({
-        req: request,
-        secret,
-        cookieName,
-        salt: cookieName,
-      });
-    } catch {
-      token = null;
-    }
-  }
-
-  if (!token && secret) {
+  if (secret) {
     try {
       token = await getToken({ req: request, secret });
     } catch {
@@ -67,7 +48,7 @@ export async function middleware(request: NextRequest) {
   const isLandlord = roles.includes("LANDLORD");
   const isAdmin = roles.includes("PLATFORM_ADMIN") || roles.includes("SUPER_ADMIN");
 
-  // Define route protection rules
+  // Route protection
   const isTenantPath = pathname.startsWith("/portal");
   const isAdminPath = pathname.startsWith("/admin");
   const isLandlordPath = pathname.startsWith("/landlord");
@@ -83,52 +64,22 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/reports") ||
     pathname.startsWith("/settings");
 
-  // If user is ALREADY logged in and visits /login, redirect to portal/dashboard
+  // 1. Unauthenticated users accessing protected routes -> redirect to /login
+  const isProtectedPath = isTenantPath || isAdminPath || isLandlordPath || isManagerPath;
+  if (isProtectedPath && !isLoggedIn) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 2. Logged-in users visiting /login -> redirect to callbackUrl or primary dashboard
   if (pathname === "/login" && isLoggedIn) {
     const callbackUrl = url.searchParams.get("callbackUrl");
-    const target = callbackUrl || (isTenant ? "/portal/dashboard" : isLandlord ? "/landlord/dashboard" : isAdmin ? "/admin/dashboard" : "/dashboard");
+    if (callbackUrl && callbackUrl !== "/login" && !callbackUrl.includes("/login")) {
+      return NextResponse.redirect(new URL(callbackUrl, request.url));
+    }
+    const target = isTenant ? "/portal/dashboard" : isLandlord ? "/landlord/dashboard" : isAdmin ? "/admin/dashboard" : "/dashboard";
     return NextResponse.redirect(new URL(target, request.url));
-  }
-
-  // Enforce Tenant Route Boundary
-  if (isTenantPath) {
-    if (!isLoggedIn) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    // Authenticated users pass through to /portal where src/app/(tenant)/layout.tsx enforces DB-level tenant verification
-  }
-
-  // Enforce Admin Route Boundary
-  if (isAdminPath) {
-    if (!isLoggedIn) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (!isAdmin && token) {
-      const dest = isTenant ? "/portal/dashboard" : isLandlord ? "/landlord/dashboard" : "/dashboard";
-      return NextResponse.redirect(new URL(dest, request.url));
-    }
-  }
-
-  // Enforce Landlord Route Boundary
-  if (isLandlordPath) {
-    if (!isLoggedIn) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (!isLandlord && !isAdmin && token) {
-      const dest = isTenant ? "/portal/dashboard" : "/dashboard";
-      return NextResponse.redirect(new URL(dest, request.url));
-    }
-  }
-
-  // Prevent tenant users from accessing manager/organisation pages
-  if (isManagerPath && isTenant && !isAdmin && token) {
-    return NextResponse.redirect(new URL("/portal/dashboard", request.url));
   }
 
   const response = NextResponse.next({

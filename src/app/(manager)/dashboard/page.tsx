@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const roleNames = (session.user as any).roles || [];
 
   if (roleNames.includes("TENANT")) {
-    redirect("/portal");
+    redirect("/portal/dashboard");
   }
 
   // Super Admin check: either explicitly by role name or by organizationId being null

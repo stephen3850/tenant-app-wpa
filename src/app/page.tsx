@@ -1,4 +1,3 @@
-// Trigger routing refresh
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 
@@ -17,7 +16,7 @@ export default async function LandingPage() {
     }
 
     if (roleNames.includes("TENANT")) {
-      redirect("/portal");
+      redirect("/portal/dashboard");
     }
 
     // Default for Manager / Staff

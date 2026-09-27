@@ -6,8 +6,10 @@ import { Footer } from "@/components/shared/footer";
 import { TenantSidebar } from "@/components/tenant/tenant-sidebar";
 import { TenantTopHeader } from "@/components/tenant/tenant-top-header";
 import { TenantMobileBottomNav } from "@/components/tenant/tenant-mobile-nav";
-import { getDashboardForRole } from "@/lib/routes";
 import { db } from "@/lib/db";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ShieldAlertIcon, LayoutDashboardIcon } from "lucide-react";
 
 export default async function TenantLayout({
   children,
@@ -49,10 +51,32 @@ export default async function TenantLayout({
     }
   }
 
-  // Strict role guard: Only TENANTS or ADMINS or users with linked Tenant profiles can access /portal/* layout
+  // If user is not a tenant profile, render a non-redirecting friendly notice inside the portal shell
   if (!isTenantUser) {
-    const dest = getDashboardForRole(roleNames);
-    redirect(dest);
+    return (
+      <div className="flex min-h-screen bg-[#F8F9FB] font-sans items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-xl text-center space-y-4">
+          <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+            <ShieldAlertIcon className="h-6 w-6" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900">Tenant Account Required</h2>
+          <p className="text-sm text-slate-500 leading-relaxed">
+            Your logged-in account (<strong>{session.user.email}</strong>) does not have an active tenant profile or lease linked to it.
+          </p>
+          <div className="pt-4 flex flex-col gap-2">
+            <Button className="w-full bg-slate-900 hover:bg-black font-bold h-11 rounded-xl" asChild>
+              <Link href="/dashboard">
+                <LayoutDashboardIcon className="h-4 w-4 mr-2" />
+                Go to Manager Dashboard
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full font-bold h-11 rounded-xl border-slate-200" asChild>
+              <Link href="/login">Switch Account</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
