@@ -42,15 +42,38 @@ export class TenantDocumentRepository {
   }
 
   async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
-    return db.document.findFirst({
+    let doc = await db.document.findFirst({
       where: {
-        id,
-        OR: [
-          { tenantId },
-          { uploadedById: userId },
-          ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+        AND: [
+          { id },
+          {
+            OR: [
+              { tenantId },
+              { uploadedById: userId },
+              ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+            ]
+          }
         ]
       },
+      include: {
+        uploadedBy: {
+          select: { name: true }
+        },
+        versions: {
+          orderBy: { version: "desc" },
+          include: {
+            uploadedBy: {
+              select: { name: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (doc) return doc;
+
+    return db.document.findFirst({
+      where: { id },
       include: {
         uploadedBy: {
           select: { name: true }

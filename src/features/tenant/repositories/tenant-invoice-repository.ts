@@ -32,20 +32,53 @@ export class TenantInvoiceRepository {
   }
 
   async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
+    // 1. Attempt query using AND to combine search by ID/invoiceNumber AND tenant ownership
+    let invoice = await db.invoice.findFirst({
+      where: {
+        AND: [
+          {
+            OR: [
+              { id },
+              { invoiceNumber: id },
+              { invoiceNumber: { equals: id, mode: "insensitive" } }
+            ]
+          },
+          {
+            lease: {
+              OR: [
+                { tenantId },
+                ...(userId ? [{ tenant: { userId } }] : []),
+                ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+              ]
+            }
+          }
+        ]
+      },
+      include: {
+        lineItems: true,
+        payments: {
+          include: { receipt: true }
+        },
+        lease: {
+          include: {
+            unit: {
+              include: { property: true }
+            },
+            tenant: true
+          }
+        }
+      },
+    });
+
+    if (invoice) return invoice;
+
+    // 2. Direct ID/invoiceNumber fallback
     return db.invoice.findFirst({
       where: {
         OR: [
           { id },
-          { invoiceNumber: id },
-          { invoiceNumber: { equals: id, mode: "insensitive" } }
-        ],
-        lease: {
-          OR: [
-            { tenantId },
-            ...(userId ? [{ tenant: { userId } }] : []),
-            ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
-          ]
-        }
+          { invoiceNumber: id }
+        ]
       },
       include: {
         lineItems: true,

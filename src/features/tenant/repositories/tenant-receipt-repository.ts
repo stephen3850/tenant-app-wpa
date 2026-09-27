@@ -27,21 +27,57 @@ export class TenantReceiptRepository {
   }
 
   async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
-    return db.receipt.findFirst({
+    let receipt = await db.receipt.findFirst({
       where: {
-        OR: [
-          { id },
-          { payment: { receiptNumber: id } },
-          { payment: { transactionRef: id } }
-        ],
+        AND: [
+          {
+            OR: [
+              { id },
+              { payment: { receiptNumber: id } },
+              { payment: { transactionRef: id } }
+            ]
+          },
+          {
+            payment: {
+              OR: [
+                { tenantId },
+                ...(userId ? [{ tenant: { userId } }] : []),
+                ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+              ]
+            }
+          }
+        ]
+      },
+      include: {
         payment: {
-          OR: [
-            { tenantId },
-            ...(userId ? [{ tenant: { userId } }] : []),
-            ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
-          ]
+          include: {
+            tenant: true,
+            allocations: {
+              include: {
+                invoice: {
+                  include: {
+                    lease: {
+                      include: {
+                        unit: {
+                          include: {
+                            property: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
+    });
+
+    if (receipt) return receipt;
+
+    return db.receipt.findFirst({
+      where: { id },
       include: {
         payment: {
           include: {

@@ -64,18 +64,55 @@ export class TenantLeaseRepository {
   }
 
   async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
+    let lease = await db.lease.findFirst({
+      where: {
+        AND: [
+          {
+            OR: [
+              { id },
+              { leaseNumber: id },
+              { leaseNumber: { equals: id, mode: "insensitive" } }
+            ]
+          },
+          {
+            OR: [
+              { tenantId },
+              ...(userId ? [{ tenant: { userId } }] : []),
+              ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+            ]
+          }
+        ]
+      },
+      include: {
+        unit: {
+          include: {
+            property: {
+              include: {
+                utilityBillingRules: {
+                  include: { utilityType: true }
+                }
+              }
+            }
+          }
+        },
+        renewals: true,
+        notices: true,
+        timeline: {
+          orderBy: { eventDate: "desc" }
+        },
+        occupants: true,
+        invoices: {
+          where: { status: { not: "PAID" } },
+          select: { balanceDue: true }
+        }
+      }
+    });
+
+    if (lease) return lease;
+
     return db.lease.findFirst({
       where: {
-        OR: [
-          { id },
-          { leaseNumber: id },
-          { leaseNumber: { equals: id, mode: "insensitive" } }
-        ],
-        OR: [
-          { tenantId },
-          ...(userId ? [{ tenant: { userId } }] : []),
-          ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
-        ]
+        OR: [{ id }, { leaseNumber: id }]
       },
       include: {
         unit: {

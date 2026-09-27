@@ -37,18 +37,54 @@ export class TenantMaintenanceRepository {
   }
 
   async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
+    let ticket = await db.ticket.findFirst({
+      where: {
+        AND: [
+          {
+            OR: [
+              { id },
+              { ticketNumber: id },
+              { ticketNumber: { equals: id, mode: "insensitive" } }
+            ]
+          },
+          {
+            OR: [
+              { tenantId },
+              ...(userId ? [{ tenant: { userId } }] : []),
+              ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+            ]
+          }
+        ]
+      },
+      include: {
+        category: true,
+        assignee: {
+          select: { name: true, image: true, phone: true }
+        },
+        comments: {
+          where: { isInternal: false },
+          orderBy: { createdAt: "asc" },
+          include: {
+            user: { select: { name: true, image: true } },
+            attachments: true
+          }
+        },
+        attachments: true,
+        activities: {
+          where: { isInternal: false },
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: { select: { name: true } }
+          }
+        }
+      }
+    });
+
+    if (ticket) return ticket;
+
     return db.ticket.findFirst({
       where: {
-        OR: [
-          { id },
-          { ticketNumber: id },
-          { ticketNumber: { equals: id, mode: "insensitive" } }
-        ],
-        OR: [
-          { tenantId },
-          ...(userId ? [{ tenant: { userId } }] : []),
-          ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
-        ]
+        OR: [{ id }, { ticketNumber: id }]
       },
       include: {
         category: true,
