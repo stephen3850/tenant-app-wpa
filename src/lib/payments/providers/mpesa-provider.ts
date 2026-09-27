@@ -51,71 +51,79 @@ export class MpesaProvider implements PaymentProvider {
     params: InitiatePaymentParams,
     account: PaymentAccount
   ): Promise<InitiatePaymentResult> {
-    const config = this.getCredentialsConfig(account);
-    const token = await mpesaTokenManager.getAccessToken(account.id, config);
+    try {
+      const config = this.getCredentialsConfig(account);
+      const token = await mpesaTokenManager.getAccessToken(account.id, config);
 
-    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
-    const passkey = config.passkey || "";
-    const password = Buffer.from(`${config.shortCode}${passkey}${timestamp}`).toString("base64");
+      const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+      const passkey = config.passkey || "";
+      const password = Buffer.from(`${config.shortCode}${passkey}${timestamp}`).toString("base64");
 
-    const baseUrl = this.getBaseUrl(config.environment);
-    const endpoint = `${baseUrl}/mpesa/stkpush/v1/processrequest`;
+      const baseUrl = this.getBaseUrl(config.environment);
+      const endpoint = `${baseUrl}/mpesa/stkpush/v1/processrequest`;
 
-    // Transaction Type depends on account type
-    const transactionType =
-      config.accountType === "TILL"
-        ? "CustomerBuyGoodsOnline"
-        : "CustomerPayBillOnline";
+      const transactionType =
+        config.accountType === "TILL"
+          ? "CustomerBuyGoodsOnline"
+          : "CustomerPayBillOnline";
 
-    const callbackUrl =
-      params.callbackUrl ||
-      `${process.env.NEXT_PUBLIC_APP_URL || "https://app.tms.com"}/api/webhooks/mpesa`;
+      const callbackUrl =
+        params.callbackUrl ||
+        `${process.env.NEXT_PUBLIC_APP_URL || "https://app.tms.com"}/api/webhooks/mpesa`;
 
-    // PartyB for Till is Till number; for PayBill it is Shortcode
-    const payload = {
-      BusinessShortCode: config.shortCode,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: transactionType,
-      Amount: Math.round(params.amount),
-      PartyA: params.phoneNumber,
-      PartyB: config.shortCode,
-      PhoneNumber: params.phoneNumber,
-      CallBackURL: callbackUrl,
-      AccountReference: params.accountReference || "RENT",
-      TransactionDesc: params.transactionDesc || `Rent Payment - ${params.accountReference}`,
-    };
-
-    console.log(`[MpesaProvider] Initiating STK Push for Org ${account.organizationId}, Account ${account.id}, Phone ${maskPhoneNumber(params.phoneNumber)}`);
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-
-    if (data.ResponseCode === "0") {
-      return {
-        success: true,
-        merchantRequestId: data.MerchantRequestID,
-        checkoutRequestId: data.CheckoutRequestID,
-        responseCode: data.ResponseCode,
-        responseDescription: data.ResponseDescription,
-        customerMessage: data.CustomerMessage,
-        rawResponse: data,
+      const payload = {
+        BusinessShortCode: config.shortCode,
+        Password: password,
+        Timestamp: timestamp,
+        TransactionType: transactionType,
+        Amount: Math.round(params.amount),
+        PartyA: params.phoneNumber,
+        PartyB: config.shortCode,
+        PhoneNumber: params.phoneNumber,
+        CallBackURL: callbackUrl,
+        AccountReference: params.accountReference || "RENT",
+        TransactionDesc: params.transactionDesc || `Rent Payment - ${params.accountReference}`,
       };
-    } else {
+
+      console.log(`[MpesaProvider] Initiating STK Push for Org ${account.organizationId}, Account ${account.id}, Phone ${maskPhoneNumber(params.phoneNumber)}`);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (data.ResponseCode === "0") {
+        return {
+          success: true,
+          merchantRequestId: data.MerchantRequestID,
+          checkoutRequestId: data.CheckoutRequestID,
+          responseCode: data.ResponseCode,
+          responseDescription: data.ResponseDescription,
+          customerMessage: data.CustomerMessage,
+          rawResponse: data,
+        };
+      } else {
+        return {
+          success: false,
+          responseCode: data.ResponseCode || "1",
+          responseDescription: data.ResponseDescription || data.errorMessage || "M-Pesa STK Push rejected",
+          error: data.errorMessage || data.ResponseDescription,
+          rawResponse: data,
+        };
+      }
+    } catch (err: any) {
+      console.error("[MpesaProvider Exception]:", err);
       return {
         success: false,
-        responseCode: data.ResponseCode,
-        responseDescription: data.ResponseDescription || "M-Pesa STK Push rejected",
-        error: data.errorMessage || data.ResponseDescription,
-        rawResponse: data,
+        responseCode: "1",
+        responseDescription: err.message || "Failed to communicate with M-Pesa API",
+        error: err.message,
       };
     }
   }
@@ -124,69 +132,77 @@ export class MpesaProvider implements PaymentProvider {
     params: PaymentStatusParams,
     account: PaymentAccount
   ): Promise<PaymentStatusResult> {
-    if (!params.checkoutRequestId) {
-      throw new Error("checkoutRequestId required for M-Pesa status query");
-    }
+    try {
+      if (!params.checkoutRequestId) {
+        throw new Error("checkoutRequestId required for M-Pesa status query");
+      }
 
-    const config = this.getCredentialsConfig(account);
-    const token = await mpesaTokenManager.getAccessToken(account.id, config);
+      const config = this.getCredentialsConfig(account);
+      const token = await mpesaTokenManager.getAccessToken(account.id, config);
 
-    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
-    const passkey = config.passkey || "";
-    const password = Buffer.from(`${config.shortCode}${passkey}${timestamp}`).toString("base64");
+      const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+      const passkey = config.passkey || "";
+      const password = Buffer.from(`${config.shortCode}${passkey}${timestamp}`).toString("base64");
 
-    const baseUrl = this.getBaseUrl(config.environment);
-    const endpoint = `${baseUrl}/mpesa/stkpushquery/v1/query`;
+      const baseUrl = this.getBaseUrl(config.environment);
+      const endpoint = `${baseUrl}/mpesa/stkpushquery/v1/query`;
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        BusinessShortCode: config.shortCode,
-        Password: password,
-        Timestamp: timestamp,
-        CheckoutRequestID: params.checkoutRequestId,
-      }),
-    });
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          BusinessShortCode: config.shortCode,
+          Password: password,
+          Timestamp: timestamp,
+          CheckoutRequestID: params.checkoutRequestId,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.ResultCode === "0" || data.ResultCode === 0) {
-      return {
-        status: "COMPLETED",
-        resultCode: data.ResultCode,
-        resultDesc: data.ResultDesc,
-        rawStatus: data,
-      };
-    } else if (data.ResultCode === "1032" || data.ResultCode === 1032) {
-      return {
-        status: "CANCELLED",
-        resultCode: data.ResultCode,
-        resultDesc: data.ResultDesc || "User cancelled payment",
-        rawStatus: data,
-      };
-    } else if (data.ResultCode === "1037" || data.ResultCode === 1037) {
-      return {
-        status: "EXPIRED",
-        resultCode: data.ResultCode,
-        resultDesc: data.ResultDesc || "STK Push request timed out",
-        rawStatus: data,
-      };
-    } else {
+      if (data.ResultCode === "0" || data.ResultCode === 0) {
+        return {
+          status: "COMPLETED",
+          resultCode: data.ResultCode,
+          resultDesc: data.ResultDesc,
+          rawStatus: data,
+        };
+      } else if (data.ResultCode === "1032" || data.ResultCode === 1032) {
+        return {
+          status: "CANCELLED",
+          resultCode: data.ResultCode,
+          resultDesc: data.ResultDesc || "User cancelled payment",
+          rawStatus: data,
+        };
+      } else if (data.ResultCode === "1037" || data.ResultCode === 1037) {
+        return {
+          status: "EXPIRED",
+          resultCode: data.ResultCode,
+          resultDesc: data.ResultDesc || "STK Push request timed out",
+          rawStatus: data,
+        };
+      } else {
+        return {
+          status: "FAILED",
+          resultCode: data.ResultCode,
+          resultDesc: data.ResultDesc || "STK Push failed",
+          rawStatus: data,
+        };
+      }
+    } catch (err: any) {
+      console.error("[MpesaProvider Status Error]:", err);
       return {
         status: "FAILED",
-        resultCode: data.ResultCode,
-        resultDesc: data.ResultDesc || "STK Push failed",
-        rawStatus: data,
+        resultCode: "1",
+        resultDesc: err.message || "Failed to query M-Pesa status",
       };
     }
   }
 
   async handleCallback(payload: any): Promise<PaymentCallbackResult> {
-    // STK Callback structure
     if (payload?.Body?.stkCallback) {
       const { stkCallback } = payload.Body;
       const checkoutRequestId = stkCallback.CheckoutRequestID;
@@ -218,7 +234,6 @@ export class MpesaProvider implements PaymentProvider {
       };
     }
 
-    // C2B Confirmation/Validation structure
     if (payload?.TransID) {
       return {
         success: true,

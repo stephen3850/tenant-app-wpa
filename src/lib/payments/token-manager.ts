@@ -43,6 +43,10 @@ export class MpesaTokenManager {
   }
 
   private async fetchNewTokenFromSafaricom(config: MpesaCredentialsConfig) {
+    if (!config.consumerKey || !config.consumerSecret) {
+      throw new Error("M-Pesa Consumer Key and Consumer Secret are required. Please configure your payment account.");
+    }
+
     const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString("base64");
     const baseUrl =
       config.environment === "production"
@@ -60,7 +64,7 @@ export class MpesaTokenManager {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("M-Pesa OAuth Error:", errorText);
-      throw new Error(`Failed to obtain M-Pesa access token from Safaricom: ${response.statusText}`);
+      throw new Error(`M-Pesa OAuth Authentication Failed: ${response.statusText || errorText || "Invalid Consumer Key or Secret"}`);
     }
 
     return await response.json();
