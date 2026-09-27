@@ -1,18 +1,16 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import {
   WrenchIcon,
   MessageSquareIcon,
-  PaperclipIcon,
   ClockIcon,
   ChevronRightIcon,
-  AlertCircleIcon
 } from "lucide-react";
 import Link from "next/link";
+import { tenantRoutes } from "@/lib/routes";
 
 export function MaintenanceList({ requests }: { requests: any[] }) {
   if (requests.length === 0) {
@@ -55,7 +53,7 @@ export function MaintenanceList({ requests }: { requests: any[] }) {
   return (
     <div className="space-y-4">
       {requests.map((request) => (
-        <Link key={request.id} href={`/maintenance/${request.id}`}>
+        <Link key={request.id} href={tenantRoutes.ticket(request.id)}>
           <Card className="hover:shadow-md transition-shadow group overflow-hidden border-l-4" style={{ borderLeftColor: request.priority === 'EMERGENCY' ? '#ef4444' : request.priority === 'HIGH' ? '#f97316' : '#3b82f6' }}>
             <CardContent className="p-0">
               <div className="flex items-center justify-between p-6">
@@ -90,7 +88,7 @@ export function MaintenanceList({ requests }: { requests: any[] }) {
                       <ClockIcon className="h-3 w-3 mr-1" />
                       {formatDate(request.createdAt)}
                     </div>
-                    {request._count.comments > 0 && (
+                    {request._count?.comments > 0 && (
                       <div className="flex items-center text-[10px] text-blue-600 font-bold uppercase">
                         <MessageSquareIcon className="h-3 w-3 mr-1" />
                         {request._count.comments} {request._count.comments === 1 ? 'Update' : 'Updates'}

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CreditCardIcon, FileTextIcon, DownloadIcon, ArrowUpRightIcon, AlertCircleIcon } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import Link from "next/link";
+import { tenantRoutes } from "@/lib/routes";
 
 export function FinancialSummary({ financial }: any) {
   const isOverdue = Number(financial.currentBalance) > 0;
@@ -42,7 +43,7 @@ export function FinancialSummary({ financial }: any) {
                 "w-full font-bold text-sm h-11 transition-all active:scale-[0.98]",
                 isOverdue ? "bg-white text-rose-600 hover:bg-zinc-100" : "bg-primary text-primary-foreground hover:bg-primary/90"
             )} asChild>
-                <Link href="/payments">
+                <Link href={tenantRoutes.payments()}>
                     Make a Payment
                 </Link>
             </Button>
@@ -68,9 +69,9 @@ export function FinancialSummary({ financial }: any) {
               </p>
               <div className="mt-8">
                 <Button variant="outline" size="lg" className="w-full h-11 font-bold text-sm rounded-xl border-2 hover:bg-muted" asChild>
-                    <Link href={`/invoices/${financial.latestInvoice.id}`}>
+                    <Link href={tenantRoutes.invoice(financial.latestInvoice.id)}>
                         <DownloadIcon className="h-4 w-4 mr-2" />
-                        Download PDF
+                        View Invoice
                     </Link>
                 </Button>
               </div>
@@ -89,22 +90,28 @@ export function FinancialSummary({ financial }: any) {
           <ArrowUpRightIcon className="h-5 w-5 text-muted-foreground" />
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 mt-2">
-          <Button variant="ghost" size="sm" className="justify-start h-11 font-semibold rounded-xl hover:bg-primary/5 hover:text-primary group">
-            <div className="p-1.5 rounded-lg bg-muted group-hover:bg-primary/10 mr-3">
-                <FileTextIcon className="h-4 w-4" />
-            </div>
-            Full Statement
+          <Button variant="ghost" size="sm" className="justify-start h-11 font-semibold rounded-xl hover:bg-primary/5 hover:text-primary group" asChild>
+            <Link href={tenantRoutes.reports()}>
+              <div className="p-1.5 rounded-lg bg-muted group-hover:bg-primary/10 mr-3">
+                  <FileTextIcon className="h-4 w-4" />
+              </div>
+              Full Statement
+            </Link>
           </Button>
-          <Button variant="ghost" size="sm" className="justify-start h-11 font-semibold rounded-xl hover:bg-primary/5 hover:text-primary group">
-            <div className="p-1.5 rounded-lg bg-muted group-hover:bg-primary/10 mr-3">
-                <CreditCardIcon className="h-4 w-4" />
-            </div>
-            Payment Methods
+          <Button variant="ghost" size="sm" className="justify-start h-11 font-semibold rounded-xl hover:bg-primary/5 hover:text-primary group" asChild>
+            <Link href={tenantRoutes.payments()}>
+              <div className="p-1.5 rounded-lg bg-muted group-hover:bg-primary/10 mr-3">
+                  <CreditCardIcon className="h-4 w-4" />
+              </div>
+              Payment Methods
+            </Link>
           </Button>
           <div className="mt-2 p-4 rounded-xl bg-muted/30 border border-dashed border-border">
              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Support</p>
              <p className="text-xs font-semibold">Contact support for billing inquiries.</p>
-             <Button variant="link" size="sm" className="h-auto p-0 text-xs font-bold text-primary mt-1">Help Center →</Button>
+             <Button variant="link" size="sm" className="h-auto p-0 text-xs font-bold text-primary mt-1" asChild>
+               <Link href={tenantRoutes.newTicket("Billing Inquiry")}>Help Center →</Link>
+             </Button>
           </div>
         </CardContent>
       </Card>

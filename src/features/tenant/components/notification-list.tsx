@@ -7,6 +7,7 @@ import { CheckCheckIcon, InboxIcon } from "lucide-react";
 import { markAllNotificationsAsRead } from "@/actions/tenant-notifications";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { tenantRoutes } from "@/lib/routes";
 
 export function NotificationList({
   notifications,
@@ -59,7 +60,7 @@ export function NotificationList({
     const params = new URLSearchParams(window.location.search);
     const currentLimit = parseInt(params.get("limit") || "20");
     params.set("limit", (currentLimit + 20).toString());
-    router.push(`/notifications?${params.toString()}`, { scroll: false });
+    router.push(`${tenantRoutes.notifications()}?${params.toString()}`, { scroll: false });
   };
 
   return (

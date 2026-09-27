@@ -55,7 +55,7 @@ export class TenantPaymentRepository {
   }
 
   async findPaymentById(id: string, tenantId: string) {
-    return db.payment.findUnique({
+    return db.payment.findFirst({
       where: { id, tenantId },
       include: {
         allocations: {

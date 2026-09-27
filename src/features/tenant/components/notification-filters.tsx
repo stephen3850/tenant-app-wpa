@@ -13,6 +13,7 @@ import {
 import { NotificationPriority } from "@prisma/client";
 import { SearchIcon, XIcon, SlidersHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { tenantRoutes } from "@/lib/routes";
 
 const NOTIFICATION_TYPES = [
   { value: "ALL", label: "All Types" },
@@ -41,7 +42,7 @@ export function NotificationFilters() {
     } else {
       params.delete(key);
     }
-    router.push(`/notifications?${params.toString()}`);
+    router.push(`${tenantRoutes.notifications()}?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export function NotificationFilters() {
 
   const clearFilters = () => {
     setSearchValue("");
-    router.push("/notifications");
+    router.push(tenantRoutes.notifications());
   };
 
   const hasActiveFilters = searchParams.get("type") ||

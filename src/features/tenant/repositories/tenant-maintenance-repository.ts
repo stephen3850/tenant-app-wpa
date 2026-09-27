@@ -37,7 +37,7 @@ export class TenantMaintenanceRepository {
   }
 
   async findById(id: string, tenantId: string) {
-    return db.ticket.findUnique({
+    return db.ticket.findFirst({
       where: { id, tenantId },
       include: {
         category: true,

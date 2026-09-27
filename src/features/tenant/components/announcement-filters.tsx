@@ -13,6 +13,7 @@ import {
 import { AnnouncementCategory, AnnouncementPriority } from "@prisma/client";
 import { SearchIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { tenantRoutes } from "@/lib/routes";
 
 export function AnnouncementFilters() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export function AnnouncementFilters() {
     } else {
       params.delete(key);
     }
-    router.push(`/announcements?${params.toString()}`);
+    router.push(`${tenantRoutes.announcements()}?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function AnnouncementFilters() {
 
   const clearFilters = () => {
     setSearchValue("");
-    router.push("/announcements");
+    router.push(tenantRoutes.announcements());
   };
 
   return (

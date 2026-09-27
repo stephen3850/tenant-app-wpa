@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { FileCheckIcon, EyeIcon, DownloadIcon } from "lucide-react";
+import { FileCheckIcon, EyeIcon } from "lucide-react";
 import Link from "next/link";
+import { tenantRoutes } from "@/lib/routes";
 
 export function ReceiptList({ receipts }: { receipts: any[] }) {
   return (
@@ -25,7 +26,7 @@ export function ReceiptList({ receipts }: { receipts: any[] }) {
               <TableHead>Method</TableHead>
               <TableHead>Reference</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right pr-6">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -39,26 +40,23 @@ export function ReceiptList({ receipts }: { receipts: any[] }) {
               receipts.map((receipt) => (
                 <TableRow key={receipt.id}>
                   <TableCell className="font-medium">
-                    {receipt.payment.receiptNumber || `RCP-${receipt.id.slice(0, 8).toUpperCase()}`}
+                    {receipt.payment?.receiptNumber || `RCP-${receipt.id.slice(0, 8).toUpperCase()}`}
                   </TableCell>
                   <TableCell>{formatDate(receipt.createdAt)}</TableCell>
                   <TableCell className="text-xs font-semibold uppercase">
-                    {receipt.payment.method}
+                    {receipt.payment?.method}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {receipt.payment.transactionRef || "N/A"}
+                    {receipt.payment?.transactionRef || "N/A"}
                   </TableCell>
                   <TableCell className="font-bold">
-                    {formatCurrency(receipt.payment.amount)}
+                    {formatCurrency(receipt.payment?.amount)}
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/receipts/${receipt.id}`}>
-                        <EyeIcon className="h-4 w-4" />
+                  <TableCell className="text-right pr-6">
+                    <Button variant="outline" size="sm" className="h-8 rounded-lg font-bold text-xs" asChild>
+                      <Link href={tenantRoutes.receipt(receipt.id)}>
+                        <EyeIcon className="h-3.5 w-3.5 mr-1" /> View Receipt
                       </Link>
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <DownloadIcon className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

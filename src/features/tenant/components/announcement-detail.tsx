@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import {
-  MegaphoneIcon,
   ClockIcon,
   PaperclipIcon,
   CheckCircle2Icon,
@@ -18,6 +17,7 @@ import {
 import { acknowledgeAnnouncement } from "@/actions/tenant-announcements";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { tenantRoutes } from "@/lib/routes";
 
 export function AnnouncementDetail({ announcement }: { announcement: any }) {
   const router = useRouter();
@@ -71,13 +71,13 @@ export function AnnouncementDetail({ announcement }: { announcement: any }) {
 
           <div className="flex items-center gap-4 pt-6 mt-6 border-t border-slate-200/60">
              <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                <AvatarImage src={announcement.creator.image} />
+                <AvatarImage src={announcement.creator?.image} />
                 <AvatarFallback className="bg-blue-600 text-white font-bold">
-                   {announcement.creator.name.charAt(0)}
+                   {announcement.creator?.name?.charAt(0) || "M"}
                 </AvatarFallback>
              </Avatar>
              <div>
-                <p className="text-sm font-bold text-slate-900">{announcement.creator.name}</p>
+                <p className="text-sm font-bold text-slate-900">{announcement.creator?.name || "Management"}</p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium uppercase tracking-tighter">
                    <ClockIcon className="h-3 w-3" />
                    Published {formatDate(announcement.sentAt)}
@@ -97,7 +97,7 @@ export function AnnouncementDetail({ announcement }: { announcement: any }) {
              dangerouslySetInnerHTML={{ __html: announcement.content }}
            />
 
-           {announcement.attachments.length > 0 && (
+           {announcement.attachments?.length > 0 && (
              <div className="mt-12 pt-8 border-t border-slate-100">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Official Attachments</h4>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -138,7 +138,7 @@ export function AnnouncementDetail({ announcement }: { announcement: any }) {
 
            <div className="flex gap-4 w-full md:w-auto">
               <Button variant="outline" asChild className="flex-1 md:flex-none">
-                 <Link href="/announcements">
+                 <Link href={tenantRoutes.announcements()}>
                    <ChevronLeftIcon className="h-4 w-4 mr-2" />
                    All Announcements
                  </Link>

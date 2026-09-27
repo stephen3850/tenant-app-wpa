@@ -29,7 +29,7 @@ export default function LoginPage() {
         toast.error(result.error);
       } else {
         toast.success("Logged in successfully!");
-        router.push("/dashboard");
+        // The server action handles redirect based on user role
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");

@@ -9,6 +9,7 @@ import { BellIcon, MegaphoneIcon, AlertCircleIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { tenantRoutes } from "@/lib/routes";
 
 export function TenantDashboard({ data }: { data: any }) {
   const {
@@ -20,8 +21,6 @@ export function TenantDashboard({ data }: { data: any }) {
     announcements,
     notifications,
     documents,
-    unreadCount,
-    unreadNotificationsCount,
     urgentAnnouncement,
     criticalNotification
   } = data;
@@ -46,7 +45,7 @@ export function TenantDashboard({ data }: { data: any }) {
                     </div>
                   </div>
                   <Button size="sm" variant="destructive" className="rounded-lg shadow-sm" asChild>
-                    <Link href={`/announcements/${urgentAnnouncement.id}`}>View Notice</Link>
+                    <Link href={tenantRoutes.announcement(urgentAnnouncement.id)}>View Notice</Link>
                   </Button>
               </CardContent>
             </Card>
@@ -65,7 +64,7 @@ export function TenantDashboard({ data }: { data: any }) {
                     </div>
                   </div>
                   <Button size="sm" variant="outline" className="rounded-lg border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-600" asChild>
-                    <Link href={`/notifications/${criticalNotification.id}`}>View Alert</Link>
+                    <Link href={tenantRoutes.notification(criticalNotification.id)}>View Alert</Link>
                   </Button>
               </CardContent>
             </Card>
@@ -82,7 +81,7 @@ export function TenantDashboard({ data }: { data: any }) {
             <CardHeader className="flex flex-row items-center justify-between py-4 px-6 bg-muted/30 border-b">
                 <CardTitle className="text-lg font-bold">Recent Payments</CardTitle>
                 <Button variant="ghost" size="sm" className="text-primary font-semibold hover:bg-primary/5" asChild>
-                    <Link href="/payments">View History</Link>
+                    <Link href={tenantRoutes.payments()}>View History</Link>
                 </Button>
             </CardHeader>
             <CardContent className="p-0">
@@ -115,7 +114,7 @@ export function TenantDashboard({ data }: { data: any }) {
                             </div>
                         ) : (
                             announcements.slice(0, 3).map((a: any) => (
-                                <Link key={a.id} href={`/announcements/${a.id}`} className="block hover:bg-muted/50 transition-all p-3 rounded-xl border border-transparent hover:border-border group">
+                                <Link key={a.id} href={tenantRoutes.announcement(a.id)} className="block hover:bg-muted/50 transition-all p-3 rounded-xl border border-transparent hover:border-border group">
                                     <div className="border-l-4 border-primary pl-4 py-1">
                                         <p className="text-sm font-bold group-hover:text-primary transition-colors">{a.title}</p>
                                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.content.replace(/<[^>]*>?/gm, '')}</p>
@@ -128,7 +127,7 @@ export function TenantDashboard({ data }: { data: any }) {
                         )}
                         {announcements.length > 0 && (
                           <Button variant="outline" size="sm" className="w-full h-10 font-bold uppercase tracking-wider text-[10px] rounded-xl" asChild>
-                             <Link href="/announcements">View All Announcements</Link>
+                             <Link href={tenantRoutes.announcements()}>View All Announcements</Link>
                           </Button>
                         )}
                     </div>
@@ -139,7 +138,7 @@ export function TenantDashboard({ data }: { data: any }) {
                             <p className="text-sm text-muted-foreground text-center py-8">All caught up!</p>
                         ) : (
                             notifications.map((n: any) => (
-                                <Link key={n.id} href={`/notifications/${n.id}`} className="block hover:bg-slate-50 transition-colors p-2 rounded-lg">
+                                <Link key={n.id} href={tenantRoutes.notification(n.id)} className="block hover:bg-slate-50 transition-colors p-2 rounded-lg">
                                     <div className="flex gap-3 items-start border-b pb-3 last:border-0">
                                         <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${n.readAt ? "bg-slate-300" : "bg-blue-600 animate-pulse"}`} />
                                         <div className="space-y-0.5">
@@ -153,7 +152,7 @@ export function TenantDashboard({ data }: { data: any }) {
                         )}
                         {notifications.length > 0 && (
                           <Button variant="outline" size="sm" className="w-full text-xs font-bold" asChild>
-                             <Link href="/notifications">Go to Notification Center</Link>
+                             <Link href={tenantRoutes.notifications()}>Go to Notification Center</Link>
                           </Button>
                         )}
                     </div>
@@ -174,8 +173,8 @@ export function TenantDashboard({ data }: { data: any }) {
                 <div className="text-center space-y-2">
                    <p className="text-sm font-medium">Need Help?</p>
                    <p className="text-xs text-muted-foreground">Access our help center for FAQs and tutorials on how to use the tenant portal.</p>
-                   <Button variant="link" size="sm" className="text-xs">
-                      Go to Help Center
+                   <Button variant="link" size="sm" className="text-xs" asChild>
+                      <Link href={tenantRoutes.newTicket("Help Inquiry")}>Go to Help Center</Link>
                    </Button>
                 </div>
              </CardContent>

@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/utils";
 import { differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { tenantRoutes } from "@/lib/routes";
 
 export function LeaseSummaryCard({ lease }: any) {
   if (!lease) return null;
@@ -50,7 +51,7 @@ export function LeaseSummaryCard({ lease }: any) {
 
         <div className="grid grid-cols-2 gap-2 pt-2">
            <Button variant="outline" size="sm" className="text-[10px] h-8 px-2" asChild>
-             <Link href="/lease">
+             <Link href={tenantRoutes.lease()}>
                <ExternalLinkIcon className="h-3 w-3 mr-1" />
                View Details
              </Link>

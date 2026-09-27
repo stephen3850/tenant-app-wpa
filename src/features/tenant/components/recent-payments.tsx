@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { DownloadIcon, CreditCardIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { tenantRoutes } from "@/lib/routes";
 
 export function RecentPayments({ payments }: any) {
   if (payments.length === 0) {
@@ -27,7 +27,7 @@ export function RecentPayments({ payments }: any) {
             <TableHead className="font-bold text-xs uppercase tracking-wider">Method</TableHead>
             <TableHead className="font-bold text-xs uppercase tracking-wider">Amount</TableHead>
             <TableHead className="font-bold text-xs uppercase tracking-wider">Status</TableHead>
-            <TableHead className="text-right font-bold text-xs uppercase tracking-wider">Receipt</TableHead>
+            <TableHead className="text-right font-bold text-xs uppercase tracking-wider pr-6">Receipt</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,10 +54,10 @@ export function RecentPayments({ payments }: any) {
                   {payment.status}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right pr-6">
                 {payment.receipt ? (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary" asChild title="Download Receipt">
-                    <Link href={`/receipts/${payment.receipt.id}`}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary" asChild title="View Receipt">
+                    <Link href={tenantRoutes.receipt(payment.receipt.id)}>
                       <DownloadIcon className="h-4 w-4" />
                     </Link>
                   </Button>

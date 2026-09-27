@@ -3,14 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
 import {
   BellIcon,
   ClockIcon,
   ArchiveIcon,
   ChevronLeftIcon,
   ArrowRightIcon,
-  ExternalLinkIcon,
   AlertCircleIcon,
   FileTextIcon,
   CreditCardIcon,
@@ -24,6 +22,7 @@ import { archiveNotification } from "@/actions/tenant-notifications";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { tenantRoutes } from "@/lib/routes";
 
 export function NotificationDetail({ notification }: { notification: any }) {
   const router = useRouter();
@@ -38,7 +37,7 @@ export function NotificationDetail({ notification }: { notification: any }) {
         title: "Notification Archived",
         description: "Moving this notification to your archive.",
       });
-      router.push("/notifications");
+      router.push(tenantRoutes.notifications());
     } catch (err) {
       toast({
         title: "Error",
@@ -86,11 +85,29 @@ export function NotificationDetail({ notification }: { notification: any }) {
     }
   };
 
+  // Ensure notification link is safe and scoped to /portal/*
+  const getSafeTenantLink = (link?: string, type?: string) => {
+    if (!link) return tenantRoutes.dashboard();
+    if (link.startsWith("/portal/")) return link;
+    // Map legacy or un-namespaced links to portal namespace
+    if (link.startsWith("/invoices/")) return link.replace("/invoices/", "/portal/invoices/");
+    if (link.startsWith("/payments")) return tenantRoutes.payments();
+    if (link.startsWith("/receipts/")) return link.replace("/receipts/", "/portal/receipts/");
+    if (link.startsWith("/documents")) return tenantRoutes.documents();
+    if (link.startsWith("/lease")) return tenantRoutes.lease();
+    if (link.startsWith("/maintenance/") || link.startsWith("/tickets/")) return link.replace(/^\/(maintenance|tickets)\//, "/portal/tickets/");
+    if (link.startsWith("/announcements/")) return link.replace("/announcements/", "/portal/announcements/");
+
+    return tenantRoutes.dashboard();
+  };
+
+  const safeLink = getSafeTenantLink(notification.link, notification.type);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild className="text-slate-500 hover:text-blue-600 p-0">
-           <Link href="/notifications">
+        <Button variant="ghost" size="sm" asChild className="text-slate-500 hover:text-blue-600 p-0 font-bold">
+           <Link href={tenantRoutes.notifications()}>
               <ChevronLeftIcon className="h-4 w-4 mr-1" />
               Back to Inbox
            </Link>
@@ -100,7 +117,7 @@ export function NotificationDetail({ notification }: { notification: any }) {
              <Button
               variant="outline"
               size="sm"
-              className="text-xs h-8"
+              className="text-xs h-8 font-bold"
               onClick={handleArchive}
               disabled={isArchiving}
              >
@@ -152,23 +169,15 @@ export function NotificationDetail({ notification }: { notification: any }) {
            )}
         </CardContent>
 
-        {notification.link && (
-          <CardFooter className="bg-slate-50 border-t p-8">
-             <Button className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 shadow-md hover:shadow-lg transition-all rounded-xl" asChild>
-                <Link href={notification.link}>
-                   {getActionLabel(notification.type)}
-                   <ArrowRightIcon className="h-5 w-5 ml-2" />
-                </Link>
-             </Button>
-          </CardFooter>
-        )}
+        <CardFooter className="bg-slate-50 border-t p-8">
+           <Button className="w-full bg-blue-600 hover:bg-blue-700 font-bold text-base h-12 shadow-md hover:shadow-lg transition-all rounded-xl" asChild>
+              <Link href={safeLink}>
+                 {getActionLabel(notification.type)}
+                 <ArrowRightIcon className="h-5 w-5 ml-2" />
+              </Link>
+           </Button>
+        </CardFooter>
       </Card>
-
-      <div className="text-center">
-         <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">
-            TMS Notification Engine v2.0 • {notification.id}
-         </p>
-      </div>
     </div>
   );
 }

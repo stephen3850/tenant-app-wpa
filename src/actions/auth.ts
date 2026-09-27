@@ -4,6 +4,7 @@ import { auth, signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { getDashboardForRole } from "@/lib/routes";
 
 // Production Auth Server Actions v2.1.5 - Verified for Neon PostgreSQL & Vercel
 
@@ -11,10 +12,28 @@ export async function login(values: any) {
   const { email, password } = values;
 
   try {
+    let targetDashboard = "/portal/dashboard";
+
+    if (email) {
+      const user = await db.user.findUnique({
+        where: { email: email.toLowerCase().trim() },
+        include: {
+          userRoles: {
+            include: { role: true }
+          }
+        }
+      });
+
+      if (user) {
+        const roles = user.userRoles.map(ur => ur.role.name);
+        targetDashboard = getDashboardForRole(roles);
+      }
+    }
+
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/dashboard",
+      redirectTo: targetDashboard,
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -42,7 +61,7 @@ export async function register(values: any) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (existingUser) {
@@ -77,7 +96,7 @@ export async function register(values: any) {
       const user = await tx.user.create({
         data: {
           name,
-          email,
+          email: email.toLowerCase().trim(),
           password: hashedPassword,
           organizationId: org.id,
           status: "ACTIVE"

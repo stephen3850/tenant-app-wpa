@@ -7,12 +7,12 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { DownloadIcon, PrinterIcon, ChevronLeftIcon, CheckCircle2Icon } from "lucide-react";
 import Link from "next/link";
 import { logReceiptDownload } from "@/actions/tenant-receipts";
+import { tenantRoutes } from "@/lib/routes";
 
 export function ReceiptDetails({ receipt }: { receipt: any }) {
   const { payment } = receipt;
-  const { tenant, allocations } = payment;
+  const { tenant, allocations = [] } = payment || {};
 
-  // Assuming the first allocation's lease/unit info is representative of the payment
   const primaryLease = allocations[0]?.invoice?.lease;
   const propertyName = primaryLease?.unit?.property?.propertyName || "N/A";
   const unitNumber = primaryLease?.unit?.unitNumber || "N/A";
@@ -29,8 +29,8 @@ export function ReceiptDetails({ receipt }: { receipt: any }) {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-4 no-print">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/receipts">
+        <Button variant="ghost" size="sm" asChild className="font-bold">
+          <Link href={tenantRoutes.receipts()}>
             <ChevronLeftIcon className="h-4 w-4 mr-1" /> Back to Receipts
           </Link>
         </Button>
@@ -45,7 +45,7 @@ export function ReceiptDetails({ receipt }: { receipt: any }) {
                 Official Receipt
               </div>
               <p className="text-3xl font-black text-slate-900">
-                {payment.receiptNumber || `RCP-${receipt.id.slice(0, 8).toUpperCase()}`}
+                {payment?.receiptNumber || `RCP-${receipt.id.slice(0, 8).toUpperCase()}`}
               </p>
             </div>
             <div className="text-right">
@@ -61,8 +61,8 @@ export function ReceiptDetails({ receipt }: { receipt: any }) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Received From</h3>
-                <p className="font-bold text-lg">{tenant.firstName} {tenant.lastName}</p>
-                <p className="text-sm text-muted-foreground">{tenant.email}</p>
+                <p className="font-bold text-lg">{tenant?.firstName} {tenant?.lastName}</p>
+                <p className="text-sm text-muted-foreground">{tenant?.email}</p>
               </div>
               <div>
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Property Details</h3>
@@ -73,15 +73,15 @@ export function ReceiptDetails({ receipt }: { receipt: any }) {
             <div className="space-y-4 text-right">
               <div>
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Payment Date</h3>
-                <p className="font-semibold">{formatDate(payment.paymentDate)}</p>
+                <p className="font-semibold">{formatDate(payment?.paymentDate)}</p>
               </div>
               <div>
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Payment Method</h3>
-                <p className="font-semibold uppercase">{payment.method}</p>
+                <p className="font-semibold uppercase">{payment?.method}</p>
               </div>
               <div>
                 <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Reference</h3>
-                <p className="font-mono text-sm font-semibold">{payment.transactionRef || "N/A"}</p>
+                <p className="font-mono text-sm font-semibold">{payment?.transactionRef || "N/A"}</p>
               </div>
             </div>
           </div>
@@ -106,9 +106,9 @@ export function ReceiptDetails({ receipt }: { receipt: any }) {
                 ) : (
                   allocations.map((alloc: any) => (
                     <TableRow key={alloc.id}>
-                      <TableCell className="font-medium">{alloc.invoice.invoiceNumber}</TableCell>
+                      <TableCell className="font-medium">{alloc.invoice?.invoiceNumber}</TableCell>
                       <TableCell className="text-sm">
-                        {new Date(alloc.invoice.billingYear, alloc.invoice.billingMonth - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        {alloc.invoice ? new Date(alloc.invoice.billingYear, alloc.invoice.billingMonth - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "N/A"}
                       </TableCell>
                       <TableCell className="text-right font-bold">{formatCurrency(alloc.amount)}</TableCell>
                     </TableRow>
@@ -122,11 +122,11 @@ export function ReceiptDetails({ receipt }: { receipt: any }) {
             <div className="bg-slate-900 text-white p-6 rounded-lg w-full md:w-80 space-y-2">
                <div className="flex justify-between text-xs text-slate-400">
                  <span>Total Received</span>
-                 <span className="line-through">{formatCurrency(payment.amount)}</span>
+                 <span className="line-through">{formatCurrency(payment?.amount)}</span>
                </div>
                <div className="flex justify-between items-end border-t border-slate-700 pt-2">
                  <span className="text-sm font-bold">Total Applied</span>
-                 <span className="text-2xl font-black">{formatCurrency(payment.amount)}</span>
+                 <span className="text-2xl font-black">{formatCurrency(payment?.amount)}</span>
                </div>
                <p className="text-[10px] text-center text-slate-500 pt-4 italic">
                  This is a computer generated receipt and does not require a signature.

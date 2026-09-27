@@ -9,7 +9,7 @@ export class TenantDocumentRepository {
   }) {
     const where: Prisma.DocumentWhereInput = {
       tenantId,
-      parentId: null, // Only get top-level documents (latest versions or main entries)
+      parentId: null, // Only get top-level documents
     };
 
     if (filters?.category) {
@@ -42,7 +42,7 @@ export class TenantDocumentRepository {
   }
 
   async findById(id: string, tenantId: string) {
-    return db.document.findUnique({
+    return db.document.findFirst({
       where: { id, tenantId },
       include: {
         uploadedBy: {
@@ -80,7 +80,7 @@ export class TenantDocumentRepository {
         parentId: null,
         expiryDate: {
           gt: new Date(),
-          lt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Next 30 days
+          lt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         }
       },
       orderBy: { expiryDate: "asc" }

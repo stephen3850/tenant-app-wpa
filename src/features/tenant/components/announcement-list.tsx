@@ -1,18 +1,17 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import {
   MegaphoneIcon,
   ClockIcon,
   ChevronRightIcon,
-  AlertCircleIcon,
   CheckCircle2Icon,
   PaperclipIcon
 } from "lucide-react";
 import Link from "next/link";
+import { tenantRoutes } from "@/lib/routes";
 
 export function AnnouncementList({ announcements }: { announcements: any[] }) {
   if (announcements.length === 0) {
@@ -51,11 +50,11 @@ export function AnnouncementList({ announcements }: { announcements: any[] }) {
   return (
     <div className="space-y-4">
       {announcements.map((a) => {
-        const isRead = a.reads.length > 0;
+        const isRead = a.reads?.length > 0;
         const isAcknowledged = isRead && a.reads[0].acknowledgedAt;
 
         return (
-          <Link key={a.id} href={`/announcements/${a.id}`}>
+          <Link key={a.id} href={tenantRoutes.announcement(a.id)}>
             <Card className={`hover:shadow-md transition-shadow group overflow-hidden border-l-4 ${!isRead ? 'bg-blue-50/30 border-blue-400' : 'border-slate-200'}`}>
               <CardContent className="p-0">
                 <div className="flex items-center justify-between p-6">
@@ -93,9 +92,9 @@ export function AnnouncementList({ announcements }: { announcements: any[] }) {
                       </div>
                       <div className="flex items-center text-[10px] text-muted-foreground uppercase font-semibold">
                         <MegaphoneIcon className="h-3 w-3 mr-1" />
-                        {a.creator.name}
+                        {a.creator?.name || "Management"}
                       </div>
-                      {a.attachments.length > 0 && (
+                      {a.attachments?.length > 0 && (
                         <div className="flex items-center text-[10px] text-blue-600 font-bold uppercase">
                           <PaperclipIcon className="h-3 w-3 mr-1" />
                           {a.attachments.length} {a.attachments.length === 1 ? 'Attachment' : 'Attachments'}

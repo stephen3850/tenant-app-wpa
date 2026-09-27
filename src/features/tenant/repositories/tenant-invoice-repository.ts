@@ -32,14 +32,16 @@ export class TenantInvoiceRepository {
   }
 
   async findById(id: string, tenantId: string) {
-    return db.invoice.findUnique({
+    return db.invoice.findFirst({
       where: {
         id,
         lease: { tenantId } // Enforce tenant isolation
       },
       include: {
         lineItems: true,
-        payments: true,
+        payments: {
+          include: { receipt: true }
+        },
         lease: {
           include: {
             unit: {

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   FileTextIcon,
@@ -16,12 +15,12 @@ import {
   AlertTriangleIcon,
   ShieldIcon,
   MegaphoneIcon,
-  ClockIcon
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { markNotificationAsRead, archiveNotification } from "@/actions/tenant-notifications";
 import { useRouter } from "next/navigation";
+import { tenantRoutes } from "@/lib/routes";
 
 export function NotificationItem({ notification }: { notification: any }) {
   const router = useRouter();
@@ -80,7 +79,7 @@ export function NotificationItem({ notification }: { notification: any }) {
 
   return (
     <div className="relative group">
-      <Link href={`/notifications/${notification.id}`}>
+      <Link href={tenantRoutes.notification(notification.id)}>
         <Card className={`transition-all hover:shadow-md border-l-4 ${!isRead ? 'border-blue-500 bg-blue-50/20' : 'border-slate-200'} ${notification.priority === 'CRITICAL' ? 'border-red-500' : ''}`}>
           <CardContent className="p-4">
             <div className="flex items-start gap-4">

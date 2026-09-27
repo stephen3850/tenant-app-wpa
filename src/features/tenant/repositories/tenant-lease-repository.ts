@@ -64,7 +64,7 @@ export class TenantLeaseRepository {
   }
 
   async findById(id: string, tenantId: string) {
-    return db.lease.findUnique({
+    return db.lease.findFirst({
       where: { id, tenantId },
       include: {
         unit: {

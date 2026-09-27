@@ -12,6 +12,7 @@ import {
 import { DocumentCategory, DocumentStatus } from "@prisma/client";
 import { SearchIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { tenantRoutes } from "@/lib/routes";
 
 export function DocumentFilters() {
   const router = useRouter();
@@ -24,11 +25,11 @@ export function DocumentFilters() {
     } else {
       params.delete(key);
     }
-    router.push(`/documents?${params.toString()}`);
+    router.push(`${tenantRoutes.documents()}?${params.toString()}`);
   };
 
   const clearFilters = () => {
-    router.push("/documents");
+    router.push(tenantRoutes.documents());
   };
 
   return (
@@ -41,7 +42,6 @@ export function DocumentFilters() {
           defaultValue={searchParams.get("search") || ""}
           onChange={(e) => {
             const val = e.target.value;
-            // Debounce would be better in a real app
             const timeout = setTimeout(() => updateFilters("search", val), 500);
             return () => clearTimeout(timeout);
           }}

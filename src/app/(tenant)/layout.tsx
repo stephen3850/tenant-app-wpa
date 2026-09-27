@@ -6,6 +6,7 @@ import { Footer } from "@/components/shared/footer";
 import { TenantSidebar } from "@/components/tenant/tenant-sidebar";
 import { TenantTopHeader } from "@/components/tenant/tenant-top-header";
 import { TenantMobileBottomNav } from "@/components/tenant/tenant-mobile-nav";
+import { getDashboardForRole } from "@/lib/routes";
 
 export default async function TenantLayout({
   children,
@@ -16,6 +17,14 @@ export default async function TenantLayout({
 
   if (!session?.user) {
     redirect("/login");
+  }
+
+  const roleNames = (session.user as any).roles || [];
+
+  // Strict role guard: Only TENANT or PLATFORM_ADMIN can access /portal/* layout
+  if (!roleNames.includes("TENANT") && !roleNames.includes("PLATFORM_ADMIN") && !roleNames.includes("SUPER_ADMIN")) {
+    const dest = getDashboardForRole(roleNames);
+    redirect(dest);
   }
 
   return (

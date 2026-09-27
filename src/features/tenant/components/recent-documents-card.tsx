@@ -1,11 +1,11 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { FileTextIcon, ArrowRightIcon, DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { tenantRoutes } from "@/lib/routes";
 
 export function RecentDocumentsCard({ documents }: { documents: any[] }) {
   return (
@@ -17,7 +17,7 @@ export function RecentDocumentsCard({ documents }: { documents: any[] }) {
             Recent Documents
           </span>
           <Button variant="ghost" size="sm" className="h-8 text-xs text-blue-600" asChild>
-            <Link href="/documents">
+            <Link href={tenantRoutes.documents()}>
               View All
               <ArrowRightIcon className="h-3 w-3 ml-1" />
             </Link>
