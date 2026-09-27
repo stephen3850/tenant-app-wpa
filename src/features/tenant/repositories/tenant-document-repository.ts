@@ -41,9 +41,16 @@ export class TenantDocumentRepository {
     });
   }
 
-  async findById(id: string, tenantId: string) {
+  async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
     return db.document.findFirst({
-      where: { id, tenantId },
+      where: {
+        id,
+        OR: [
+          { tenantId },
+          { uploadedById: userId },
+          ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+        ]
+      },
       include: {
         uploadedBy: {
           select: { name: true }

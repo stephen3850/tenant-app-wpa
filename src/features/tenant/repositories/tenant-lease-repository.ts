@@ -63,9 +63,20 @@ export class TenantLeaseRepository {
     });
   }
 
-  async findById(id: string, tenantId: string) {
+  async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
     return db.lease.findFirst({
-      where: { id, tenantId },
+      where: {
+        OR: [
+          { id },
+          { leaseNumber: id },
+          { leaseNumber: { equals: id, mode: "insensitive" } }
+        ],
+        OR: [
+          { tenantId },
+          ...(userId ? [{ tenant: { userId } }] : []),
+          ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+        ]
+      },
       include: {
         unit: {
           include: {

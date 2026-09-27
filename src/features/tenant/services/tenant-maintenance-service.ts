@@ -18,7 +18,10 @@ export class TenantMaintenanceService {
 
   async getRequestDetails(userId: string, requestId: string) {
     const tenant = await this.getTenant(userId);
-    const ticket = await tenantMaintenanceRepository.findById(requestId, tenant.id);
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
+
+    const ticket = await tenantMaintenanceRepository.findById(requestId, tenantId, userEmail, userId);
     if (!ticket) throw new Error("Request not found or access denied");
     return ticket;
   }
@@ -38,7 +41,7 @@ export class TenantMaintenanceService {
     const activeLease = tenant.leases.find(l => l.status === "ACTIVE" || l.status === "EXPIRING");
     if (!activeLease) throw new Error("No active lease found to associate with maintenance request");
 
-    // Generate ticket number (simplified for this example)
+    // Generate ticket number
     const ticketCount = await db.ticket.count({ where: { organizationId: tenant.organizationId } });
     const ticketNumber = `TKT-${(ticketCount + 1).toString().padStart(5, '0')}`;
 
@@ -52,8 +55,8 @@ export class TenantMaintenanceService {
       contactPreference: data.contactPreference,
       organization: { connect: { id: tenant.organizationId } },
       tenant: { connect: { id: tenant.id } },
-      property: { connect: { id: activeLease.propertyId } },
-      unit: { connect: { id: activeLease.unitId } },
+      property: { connect: { id: activeLease.unit.property.id } },
+      unit: { connect: { id: activeLease.unit.id } },
       category: { connect: { id: data.categoryId } },
       creator: { connect: { id: userId } },
       attachments: {
@@ -81,14 +84,17 @@ export class TenantMaintenanceService {
 
   async addComment(userId: string, requestId: string, content: string, attachments?: { url: string; name: string; type: string; size: number }[]) {
     const tenant = await this.getTenant(userId);
-    const ticket = await tenantMaintenanceRepository.findById(requestId, tenant.id);
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
+
+    const ticket = await tenantMaintenanceRepository.findById(requestId, tenantId, userEmail, userId);
     if (!ticket) throw new Error("Request not found");
     if (ticket.status === "CLOSED") throw new Error("Cannot add comments to a closed request");
 
     const comment = await tenantMaintenanceRepository.addComment({
       content,
       isInternal: false,
-      ticket: { connect: { id: requestId } },
+      ticket: { connect: { id: ticket.id } },
       user: { connect: { id: userId } },
       attachments: {
         create: attachments?.map(a => ({
@@ -97,7 +103,7 @@ export class TenantMaintenanceService {
           type: a.type,
           size: a.size,
           uploadedBy: { connect: { id: userId } },
-          ticket: { connect: { id: requestId } }
+          ticket: { connect: { id: ticket.id } }
         }))
       }
     });
@@ -115,10 +121,13 @@ export class TenantMaintenanceService {
 
   async confirmResolution(userId: string, requestId: string, rating: number, feedback?: string) {
     const tenant = await this.getTenant(userId);
-    const ticket = await tenantMaintenanceRepository.findById(requestId, tenant.id);
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
+
+    const ticket = await tenantMaintenanceRepository.findById(requestId, tenantId, userEmail, userId);
     if (!ticket) throw new Error("Request not found");
 
-    const updated = await tenantMaintenanceRepository.update(requestId, tenant.id, {
+    const updated = await tenantMaintenanceRepository.update(ticket.id, tenant.id, {
       status: "CLOSED",
       closedAt: new Date(),
       satisfactionRating: rating,
@@ -127,7 +136,7 @@ export class TenantMaintenanceService {
 
     await db.ticketActivity.create({
       data: {
-        ticketId: requestId,
+        ticketId: ticket.id,
         userId: userId,
         type: "CLOSED",
         content: `Tenant confirmed resolution. Rating: ${rating}/5. Feedback: ${feedback || "None"}`
@@ -137,7 +146,7 @@ export class TenantMaintenanceService {
     await createAuditLog({
       action: "MAINTENANCE_RESOLUTION_CONFIRMED",
       entity: "Ticket",
-      entityId: requestId,
+      entityId: ticket.id,
       organizationId: tenant.organizationId,
       userId: userId,
       newData: { rating, feedback }
@@ -148,17 +157,20 @@ export class TenantMaintenanceService {
 
   async reopenRequest(userId: string, requestId: string, reason: string) {
     const tenant = await this.getTenant(userId);
-    const ticket = await tenantMaintenanceRepository.findById(requestId, tenant.id);
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
+
+    const ticket = await tenantMaintenanceRepository.findById(requestId, tenantId, userEmail, userId);
     if (!ticket) throw new Error("Request not found");
 
-    const updated = await tenantMaintenanceRepository.update(requestId, tenant.id, {
+    const updated = await tenantMaintenanceRepository.update(ticket.id, tenant.id, {
       status: "REOPENED",
       closedAt: null
     });
 
     await db.ticketActivity.create({
       data: {
-        ticketId: requestId,
+        ticketId: ticket.id,
         userId: userId,
         type: "REOPENED",
         content: `Tenant reopened the request. Reason: ${reason}`
@@ -168,7 +180,7 @@ export class TenantMaintenanceService {
     await createAuditLog({
       action: "MAINTENANCE_REQUEST_REOPENED",
       entity: "Ticket",
-      entityId: requestId,
+      entityId: ticket.id,
       organizationId: tenant.organizationId,
       userId: userId,
       newData: { reason }

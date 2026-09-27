@@ -13,15 +13,16 @@ export class TenantInvoiceService {
 
   async getInvoiceDetails(userId: string, invoiceId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const invoice = await tenantInvoiceRepository.findById(invoiceId, tenant.id);
+    const invoice = await tenantInvoiceRepository.findById(invoiceId, tenantId, userEmail, userId);
     if (!invoice) throw new Error("Invoice not found or access denied");
 
     await createAuditLog({
       action: "INVOICE_VIEWED",
       entity: "Invoice",
-      entityId: invoiceId,
+      entityId: invoice.id,
       organizationId: invoice.organizationId,
       userId: userId
     } as any);
@@ -31,15 +32,16 @@ export class TenantInvoiceService {
 
   async logInvoiceDownload(userId: string, invoiceId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const invoice = await tenantInvoiceRepository.findById(invoiceId, tenant.id);
+    const invoice = await tenantInvoiceRepository.findById(invoiceId, tenantId, userEmail, userId);
     if (!invoice) throw new Error("Invoice not found");
 
     await createAuditLog({
       action: "INVOICE_DOWNLOADED",
       entity: "Invoice",
-      entityId: invoiceId,
+      entityId: invoice.id,
       organizationId: invoice.organizationId,
       userId: userId
     } as any);

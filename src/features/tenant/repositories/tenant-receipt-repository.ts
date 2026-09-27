@@ -26,12 +26,20 @@ export class TenantReceiptRepository {
     });
   }
 
-  async findById(id: string, tenantId: string) {
+  async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
     return db.receipt.findFirst({
       where: {
-        id,
+        OR: [
+          { id },
+          { payment: { receiptNumber: id } },
+          { payment: { transactionRef: id } }
+        ],
         payment: {
-          tenantId,
+          OR: [
+            { tenantId },
+            ...(userId ? [{ tenant: { userId } }] : []),
+            ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+          ]
         },
       },
       include: {

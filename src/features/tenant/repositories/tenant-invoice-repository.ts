@@ -31,11 +31,21 @@ export class TenantInvoiceRepository {
     });
   }
 
-  async findById(id: string, tenantId: string) {
+  async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
     return db.invoice.findFirst({
       where: {
-        id,
-        lease: { tenantId } // Enforce tenant isolation
+        OR: [
+          { id },
+          { invoiceNumber: id },
+          { invoiceNumber: { equals: id, mode: "insensitive" } }
+        ],
+        lease: {
+          OR: [
+            { tenantId },
+            ...(userId ? [{ tenant: { userId } }] : []),
+            ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+          ]
+        }
       },
       include: {
         lineItems: true,

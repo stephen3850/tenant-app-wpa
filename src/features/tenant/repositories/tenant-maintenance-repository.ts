@@ -36,9 +36,20 @@ export class TenantMaintenanceRepository {
     });
   }
 
-  async findById(id: string, tenantId: string) {
+  async findById(id: string, tenantId: string, userEmail?: string, userId?: string) {
     return db.ticket.findFirst({
-      where: { id, tenantId },
+      where: {
+        OR: [
+          { id },
+          { ticketNumber: id },
+          { ticketNumber: { equals: id, mode: "insensitive" } }
+        ],
+        OR: [
+          { tenantId },
+          ...(userId ? [{ tenant: { userId } }] : []),
+          ...(userEmail ? [{ tenant: { email: { equals: userEmail, mode: "insensitive" as const } } }] : [])
+        ]
+      },
       include: {
         category: true,
         assignee: {
@@ -75,7 +86,7 @@ export class TenantMaintenanceRepository {
 
   async update(id: string, tenantId: string, data: Prisma.TicketUpdateInput) {
     return db.ticket.update({
-      where: { id, tenantId },
+      where: { id },
       data
     });
   }

@@ -30,9 +30,10 @@ export class TenantLeaseService {
 
   async getLeaseDetails(userId: string, leaseId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const lease = await tenantLeaseRepository.findById(leaseId, tenant.id);
+    const lease = await tenantLeaseRepository.findById(leaseId, tenantId, userEmail, userId);
     if (!lease) throw new Error("Lease not found or access denied");
 
     return lease;
@@ -74,9 +75,10 @@ export class TenantLeaseService {
 
   async submitRenewalInterest(userId: string, leaseId: string, notes?: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const lease = await tenantLeaseRepository.findById(leaseId, tenant.id);
+    const lease = await tenantLeaseRepository.findById(leaseId, tenantId, userEmail, userId);
     if (!lease) throw new Error("Lease not found");
 
     // Check if there's already a pending renewal
@@ -85,7 +87,7 @@ export class TenantLeaseService {
 
     const renewal = await db.leaseRenewal.create({
       data: {
-        leaseId,
+        leaseId: lease.id,
         organizationId: lease.organizationId,
         status: "REQUESTED",
         proposedStartDate: lease.endDate ? new Date(lease.endDate) : new Date(),
@@ -98,7 +100,7 @@ export class TenantLeaseService {
 
     await db.leaseEvent.create({
       data: {
-        leaseId,
+        leaseId: lease.id,
         type: "RENEWAL_INTEREST_SUBMITTED",
         description: `Tenant expressed interest in renewing the lease. Notes: ${notes || "None"}`
       }
@@ -140,15 +142,16 @@ export class TenantLeaseService {
 
   async logLeaseDownload(userId: string, leaseId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const lease = await tenantLeaseRepository.findById(leaseId, tenant.id);
+    const lease = await tenantLeaseRepository.findById(leaseId, tenantId, userEmail, userId);
     if (!lease) throw new Error("Lease not found");
 
     await createAuditLog({
       action: "LEASE_DOWNLOADED",
       entity: "Lease",
-      entityId: leaseId,
+      entityId: lease.id,
       organizationId: lease.organizationId,
       userId: userId
     } as any);

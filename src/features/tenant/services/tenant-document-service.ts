@@ -81,9 +81,10 @@ export class TenantDocumentService {
 
   async getDocumentDetails(userId: string, documentId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const document = await tenantDocumentRepository.findById(documentId, tenant.id);
+    const document = await tenantDocumentRepository.findById(documentId, tenantId, userEmail, userId);
     if (!document) throw new Error("Document not found or access denied");
 
     await createAuditLog({
@@ -99,15 +100,16 @@ export class TenantDocumentService {
 
   async logDocumentDownload(userId: string, documentId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const document = await tenantDocumentRepository.findById(documentId, tenant.id);
+    const document = await tenantDocumentRepository.findById(documentId, tenantId, userEmail, userId);
     if (!document) throw new Error("Document not found");
 
     await createAuditLog({
       action: "DOCUMENT_DOWNLOADED",
       entity: "Document",
-      entityId: documentId,
+      entityId: document.id,
       organizationId: document.organizationId,
       userId: userId
     } as any);
@@ -117,15 +119,16 @@ export class TenantDocumentService {
 
   async logDocumentPrint(userId: string, documentId: string) {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-    if (!tenant) throw new Error("Tenant profile not found");
+    const tenantId = tenant?.id || "";
+    const userEmail = tenant?.email || undefined;
 
-    const document = await tenantDocumentRepository.findById(documentId, tenant.id);
+    const document = await tenantDocumentRepository.findById(documentId, tenantId, userEmail, userId);
     if (!document) throw new Error("Document not found");
 
     await createAuditLog({
       action: "DOCUMENT_PRINTED",
       entity: "Document",
-      entityId: documentId,
+      entityId: document.id,
       organizationId: document.organizationId,
       userId: userId
     } as any);
