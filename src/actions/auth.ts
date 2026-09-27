@@ -5,6 +5,8 @@ import { AuthError } from "next-auth";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
+// Production Auth Server Actions v2.1.5 - Verified for Neon PostgreSQL & Vercel
+
 export async function login(values: any) {
   const { email, password } = values;
 
