@@ -20,6 +20,23 @@ export async function getTenantDocuments(filters?: {
   return tenantDocumentService.getTenantDocuments(user.id, filters);
 }
 
+export async function uploadTenantDocument(data: {
+  name: string;
+  category: DocumentCategory;
+  description?: string;
+  expiryDate?: string;
+  fileData: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+}) {
+  const user = await getSession();
+  const document = await tenantDocumentService.uploadTenantDocument(user.id, data);
+  revalidatePath("/portal/documents");
+  revalidatePath("/portal/dashboard");
+  return document;
+}
+
 export async function getDocumentDetails(documentId: string) {
   const user = await getSession();
   return tenantDocumentService.getDocumentDetails(user.id, documentId);

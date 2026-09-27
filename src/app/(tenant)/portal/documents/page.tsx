@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { tenantDocumentService } from "@/features/tenant/services/tenant-document-service";
 import { DocumentList } from "@/features/tenant/components/document-list";
 import { DocumentFilters } from "@/features/tenant/components/document-filters";
+import { UploadTenantDocumentDialog } from "@/features/tenant/components/upload-document-dialog";
 import { DocumentCategory, DocumentStatus } from "@prisma/client";
 
 export default async function TenantDocumentsPage({
@@ -30,9 +31,10 @@ export default async function TenantDocumentsPage({
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Document Center</h2>
           <p className="text-muted-foreground">
-            Access and manage all documents shared with you.
+            Access, manage, and upload your official records and identity documents.
           </p>
         </div>
+        <UploadTenantDocumentDialog />
       </div>
 
       <DocumentFilters />

@@ -60,6 +60,17 @@ export class TenantDocumentRepository {
     });
   }
 
+  async createDocument(data: Prisma.DocumentUncheckedCreateInput) {
+    return db.document.create({
+      data,
+      include: {
+        uploadedBy: {
+          select: { name: true }
+        }
+      }
+    });
+  }
+
   async getRecentDocuments(tenantId: string, limit = 5) {
     return db.document.findMany({
       where: { tenantId, parentId: null },
