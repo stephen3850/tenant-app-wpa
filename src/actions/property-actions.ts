@@ -155,36 +155,78 @@ export async function createProperty(values: any) {
 }
 
 export async function updateProperty(id: string, values: any) {
-  const { organizationId } = await getContext();
-  await checkPermission("update", "property");
-  const tenantDb = getTenantDb(organizationId);
+  try {
+    const { organizationId } = await getContext();
+    await checkPermission("update", "property");
+    const tenantDb = getTenantDb(organizationId);
 
-  const oldData = await tenantDb.property.findUnique({ where: { id } });
+    const oldData = await tenantDb.property.findUnique({ where: { id } });
+    if (!oldData) {
+      return { error: "Property not found" };
+    }
 
-  const updated = await tenantDb.property.update({
-    where: { id },
-    data: {
-      propertyName: values.name,
-      propertyCode: values.code,
-      propertyType: values.type,
-      address: values.address,
-      city: values.city,
-      county: values.county,
-      description: values.description,
-    },
-  });
+    // Handle image upload to disk if base64 provided
+    let featuredImageUrl = values.featuredImage !== undefined ? values.featuredImage : oldData.featuredImage;
+    if (featuredImageUrl && typeof featuredImageUrl === "string" && featuredImageUrl.startsWith("data:image")) {
+      try {
+        const base64Data = featuredImageUrl.split(",")[1];
+        const mimeType = featuredImageUrl.split(";")[0].split(":")[1];
+        const extension = mimeType.split("/")[1] || "png";
+        const fileName = `prop_${crypto.randomUUID()}.${extension}`;
+        const uploadDir = path.join(process.cwd(), "public", "uploads");
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        fs.writeFileSync(path.join(uploadDir, fileName), base64Data, "base64");
+        featuredImageUrl = `/uploads/${fileName}`;
+      } catch (err) {
+        console.error("Image save failed:", err);
+      }
+    }
 
-  await createAuditLog({
-    action: "UPDATE",
-    entity: "Property",
-    entityId: id,
-    oldData,
-    newData: updated,
-  });
+    const updated = await tenantDb.property.update({
+      where: { id },
+      data: {
+        propertyName: values.propertyName || values.name || oldData.propertyName,
+        propertyCode: values.propertyCode || values.code || oldData.propertyCode,
+        propertyType: values.propertyType || values.type || oldData.propertyType,
+        address: values.address !== undefined ? values.address : oldData.address,
+        city: values.city !== undefined ? values.city : oldData.city,
+        county: values.county !== undefined ? values.county : oldData.county,
+        description: values.description !== undefined ? values.description : oldData.description,
+        featuredImage: featuredImageUrl,
+        numberOfFloors: values.numberOfFloors !== undefined ? Number(values.numberOfFloors) : oldData.numberOfFloors,
+        paybillNumber: values.paybillNumber !== undefined ? values.paybillNumber : oldData.paybillNumber,
+        bankName: values.bankName !== undefined ? values.bankName : oldData.bankName,
+        accountNumber: values.accountNumber !== undefined ? values.accountNumber : oldData.accountNumber,
+        accountFormat: values.accountFormat !== undefined ? values.accountFormat : oldData.accountFormat,
+        customFormat: values.customFormat !== undefined ? values.customFormat : oldData.customFormat,
+        serviceChargeRate: values.serviceChargeRate !== undefined ? Number(values.serviceChargeRate) : oldData.serviceChargeRate,
+        waterUnitRate: values.waterUnitRate !== undefined ? (values.waterUnitRate ? Number(values.waterUnitRate) : null) : oldData.waterUnitRate,
+        utilityDueRule: values.utilityDueRule !== undefined ? values.utilityDueRule : oldData.utilityDueRule,
+        daysAfterReading: values.daysAfterReading !== undefined ? (values.daysAfterReading ? Number(values.daysAfterReading) : null) : oldData.daysAfterReading,
+        nextMonthDay: values.nextMonthDay !== undefined ? (values.nextMonthDay ? Number(values.nextMonthDay) : null) : oldData.nextMonthDay,
+        incomeTaxRate: values.incomeTaxRate !== undefined ? Number(values.incomeTaxRate) : oldData.incomeTaxRate,
+        landlordId: values.landlordId !== undefined ? (values.landlordId || null) : oldData.landlordId,
+      },
+    });
 
-  revalidatePath("/properties");
-  revalidatePath(`/properties/${id}`);
-  return serialize({ success: "Property updated!", data: updated });
+    await createAuditLog({
+      action: "UPDATE",
+      entity: "Property",
+      entityId: id,
+      oldData,
+      newData: updated,
+    });
+
+    revalidatePath("/properties");
+    revalidatePath(`/properties/${id}`);
+    return serialize({ success: true, data: updated });
+  } catch (error: any) {
+    console.error("Property update error:", error);
+    if (error.code === 'P2002') {
+      return { error: "A property with this code already exists." };
+    }
+    return { error: error.message || "Failed to update property" };
+  }
 }
 
 export async function deleteProperty(id: string) {

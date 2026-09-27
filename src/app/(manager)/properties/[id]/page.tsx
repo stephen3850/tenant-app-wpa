@@ -147,7 +147,7 @@ export default async function PropertyDetailsPage({ params, searchParams }: Prop
       </Card>
 
       {/* Action Toolbar */}
-      <PropertyActionToolbar propertyId={id} />
+      <PropertyActionToolbar propertyId={id} property={property} />
 
       {/* Monthly Invoice Services */}
       <Card className="border-[#DCE3EA] shadow-sm rounded-xl bg-white overflow-hidden">
