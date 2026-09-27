@@ -24,11 +24,44 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-tenant-id", subdomain);
   }
 
-  // 4. Decode JWT session token for role-aware routing
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-  const token = await getToken({ req: request, secret });
+  // 4. Decode NextAuth v5 session cookies (supporting both production Vercel HTTPS and localhost HTTP cookie names)
+  const cookieName =
+    request.cookies.get("__Secure-authjs.session-token")?.name ||
+    request.cookies.get("authjs.session-token")?.name ||
+    request.cookies.get("__Secure-next-auth.session-token")?.name ||
+    request.cookies.get("next-auth.session-token")?.name;
 
-  const isLoggedIn = !!token;
+  const rawCookie =
+    request.cookies.get("__Secure-authjs.session-token")?.value ||
+    request.cookies.get("authjs.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value ||
+    request.cookies.get("next-auth.session-token")?.value;
+
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
+  let token = null;
+  if (cookieName) {
+    try {
+      token = await getToken({
+        req: request,
+        secret,
+        cookieName,
+        salt: cookieName,
+      });
+    } catch {
+      token = null;
+    }
+  }
+
+  if (!token && secret) {
+    try {
+      token = await getToken({ req: request, secret });
+    } catch {
+      token = null;
+    }
+  }
+
+  const isLoggedIn = !!token || !!rawCookie;
   const roles = (token?.roles as string[]) || [];
   const isTenant = roles.includes("TENANT");
   const isLandlord = roles.includes("LANDLORD");
@@ -50,6 +83,13 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/reports") ||
     pathname.startsWith("/settings");
 
+  // If user is ALREADY logged in and visits /login, redirect to portal/dashboard
+  if (pathname === "/login" && isLoggedIn) {
+    const callbackUrl = url.searchParams.get("callbackUrl");
+    const target = callbackUrl || (isTenant ? "/portal/dashboard" : isLandlord ? "/landlord/dashboard" : isAdmin ? "/admin/dashboard" : "/dashboard");
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
   // Enforce Tenant Route Boundary
   if (isTenantPath) {
     if (!isLoggedIn) {
@@ -67,7 +107,7 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (!isAdmin) {
+    if (!isAdmin && token) {
       const dest = isTenant ? "/portal/dashboard" : isLandlord ? "/landlord/dashboard" : "/dashboard";
       return NextResponse.redirect(new URL(dest, request.url));
     }
@@ -80,14 +120,14 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (!isLandlord && !isAdmin) {
+    if (!isLandlord && !isAdmin && token) {
       const dest = isTenant ? "/portal/dashboard" : "/dashboard";
       return NextResponse.redirect(new URL(dest, request.url));
     }
   }
 
   // Prevent tenant users from accessing manager/organisation pages
-  if (isManagerPath && isTenant && !isAdmin) {
+  if (isManagerPath && isTenant && !isAdmin && token) {
     return NextResponse.redirect(new URL("/portal/dashboard", request.url));
   }
 

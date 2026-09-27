@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { getDashboardForRole } from "@/lib/routes";
 
-// Production Auth Server Actions v2.1.6 - Verified for Neon PostgreSQL & Vercel
+// Production Auth Server Actions v2.1.7 - Verified for Neon PostgreSQL & Vercel
 
 export async function login(values: any) {
   const { email, password } = values;
@@ -29,7 +29,6 @@ export async function login(values: any) {
       if (user) {
         let roles = user.userRoles.map(ur => ur.role.name);
 
-        // Check if user is linked to a Tenant record
         const tenantRecord = user.tenantProfile || await db.tenant.findFirst({
           where: {
             OR: [
@@ -47,18 +46,14 @@ export async function login(values: any) {
       }
     }
 
-    const response = await signIn("credentials", {
+    await signIn("credentials", {
       email: cleanEmail,
       password,
-      redirect: false,
+      redirectTo: targetDashboard,
     });
 
-    if ((response as any)?.error) {
-      return { error: "Invalid email or password!" };
-    }
-
     return { success: true, redirectTo: targetDashboard };
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
@@ -66,6 +61,11 @@ export async function login(values: any) {
         default:
           return { error: "Authentication failed. Please check your credentials." };
       }
+    }
+
+    // Re-throw NEXT_REDIRECT so Next.js performs server-side redirect
+    if (error?.digest?.startsWith("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+      throw error;
     }
 
     console.error("Login Error:", error);

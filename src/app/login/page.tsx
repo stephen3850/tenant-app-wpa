@@ -27,14 +27,23 @@ export default function LoginPage() {
 
       if (result?.error) {
         toast.error(result.error);
+        setIsLoading(false);
       } else if (result?.redirectTo) {
         toast.success("Logged in successfully!");
-        router.push(result.redirectTo);
-        router.refresh();
+        const searchParams = new URLSearchParams(window.location.search);
+        const callbackUrl = searchParams.get("callbackUrl");
+        window.location.href = callbackUrl || result.redirectTo;
       }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
+    } catch (error: any) {
+      // If NEXT_REDIRECT was thrown, Next.js is redirecting the browser after setting cookies
+      if (error?.digest?.startsWith("NEXT_REDIRECT") || error?.message === "NEXT_REDIRECT") {
+        toast.success("Logged in successfully!");
+        const searchParams = new URLSearchParams(window.location.search);
+        const callbackUrl = searchParams.get("callbackUrl");
+        window.location.href = callbackUrl || "/portal/dashboard";
+        return;
+      }
+      toast.error("Invalid email or password!");
       setIsLoading(false);
     }
   }
