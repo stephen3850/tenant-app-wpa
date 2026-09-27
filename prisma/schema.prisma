@@ -130,6 +130,9 @@ model Organization {
   tenantLedgers              TenantLedger[]
   mpesaCredential            MpesaCredential?
   mpesaTransactions          MpesaTransaction[]
+  paymentAccounts            PaymentAccount[]
+  paymentRoutes              PaymentRoute[]
+  paymentEvents              PaymentEvent[]
   expenseCategories          ExpenseCategory[]
   vendors                    Vendor[]
   leaseRenewals              LeaseRenewal[]
@@ -427,6 +430,7 @@ model Property {
   cases             Case[]
   securityIncidents SecurityIncident[]
   complianceRecords ComplianceRecord[]
+  paymentRoutes     PaymentRoute[]
 
   @@index([organizationId])
   @@index([landlordId])
@@ -785,9 +789,12 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   PENDING
+  STK_REQUESTED
   COMPLETED
-  REVERSED
   FAILED
+  CANCELLED
+  EXPIRED
+  REVERSED
 }
 
 enum LedgerEntryType {
@@ -796,6 +803,103 @@ enum LedgerEntryType {
   CREDIT
   ADJUSTMENT
   REVERSAL
+}
+
+model PaymentAccount {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  provider    String @default("MPESA") // MPESA, BANK, CARD
+  accountType String // TILL, PAYBILL, BANK_ACCOUNT
+  displayName String
+  shortCode   String? // Till number, PayBill shortcode, Bank Account Number
+
+  status    String  @default("ACTIVE") // ACTIVE, INACTIVE, TEST
+  isDefault Boolean @default(false)
+
+  credentialsEncrypted String @db.Text // Encrypted JSON storing consumerKey, consumerSecret, passkey, environment, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  routes            PaymentRoute[]
+  tokens            MpesaToken[]
+  payments          Payment[]
+  mpesaTransactions MpesaTransaction[]
+  paymentEvents     PaymentEvent[]
+
+  @@index([organizationId])
+  @@index([provider])
+  @@index([shortCode])
+  @@index([status])
+  @@map("payment_accounts")
+}
+
+model PaymentRoute {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  paymentMethod    PaymentMethod  @default(MPESA)
+  paymentAccountId String
+  paymentAccount   PaymentAccount @relation(fields: [paymentAccountId], references: [id], onDelete: Cascade)
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([propertyId])
+  @@index([paymentAccountId])
+  @@map("payment_routes")
+}
+
+model PaymentEvent {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  paymentAccountId String?
+  paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id], onDelete: SetNull)
+
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  provider         String    @default("MPESA")
+  eventType        String // STK_PUSH_CALLBACK, C2B_VALIDATION, C2B_CONFIRMATION
+  providerEventId  String?   @unique // CheckoutRequestID or MpesaReceiptNumber for idempotency
+  payload          Json
+  receivedAt       DateTime  @default(now())
+  processedAt      DateTime?
+  processingStatus String    @default("PENDING") // PENDING, PROCESSED, FAILED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([paymentAccountId])
+  @@index([providerEventId])
+  @@index([processingStatus])
+  @@map("payment_events")
+}
+
+model MpesaToken {
+  id               String         @id @default(cuid())
+  paymentAccountId String         @unique
+  paymentAccount   PaymentAccount @relation(fields: [paymentAccountId], references: [id], onDelete: Cascade)
+
+  accessToken String   @db.Text
+  expiresAt   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("mpesa_tokens")
 }
 
 model Payment {
@@ -809,6 +913,9 @@ model Payment {
   leaseId String?
   lease   Lease?  @relation(fields: [leaseId], references: [id])
 
+  paymentAccountId String?
+  paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id])
+
   amount Decimal       @db.Decimal(12, 2)
   method PaymentMethod
   status PaymentStatus @default(COMPLETED)
@@ -819,9 +926,11 @@ model Payment {
 
   notes String?
 
-  allocations   PaymentAllocation[]
-  ledgerEntries TenantLedger[]
-  receipt       Receipt?
+  allocations       PaymentAllocation[]
+  ledgerEntries     TenantLedger[]
+  receipt           Receipt?
+  paymentEvents     PaymentEvent[]
+  mpesaTransactions MpesaTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -830,6 +939,7 @@ model Payment {
 
   @@index([organizationId])
   @@index([tenantId])
+  @@index([paymentAccountId])
   @@index([status])
   @@index([paymentDate])
   @@index([transactionRef])
@@ -940,6 +1050,12 @@ model MpesaTransaction {
   invoiceId String?
   invoice   Invoice? @relation(fields: [invoiceId], references: [id])
 
+  paymentAccountId String?
+  paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id])
+
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
   merchantRequestId String? @unique
   checkoutRequestId String? @unique
 
@@ -963,6 +1079,8 @@ model MpesaTransaction {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+  @@index([paymentAccountId])
+  @@index([paymentId])
   @@index([checkoutRequestId])
   @@index([merchantRequestId])
   @@index([mpesaReceiptNumber])

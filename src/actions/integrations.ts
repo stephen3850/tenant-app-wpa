@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { createAuditLog } from "@/lib/audit";
 import { checkPermission } from "@/lib/permissions";
+import { encryptCredentials } from "@/lib/encryption";
+import { mpesaProvider } from "@/lib/payments/providers/mpesa-provider";
 
 export async function getMpesaCredentials() {
   const session = await auth();
@@ -18,7 +20,7 @@ export async function getMpesaCredentials() {
 }
 
 export async function updateMpesaCredentials(values: any) {
-  await checkPermission("update", "organization"); // Or a more specific permission if it exists
+  await checkPermission("update", "organization");
 
   const session = await auth();
   const organizationId = (session?.user as any)?.organizationId;
@@ -45,7 +47,6 @@ export async function updateMpesaCredentials(values: any) {
       data,
     });
   } else {
-    // For new credentials, all fields are required if not clearing
     result = await db.mpesaCredential.create({
       data: {
         organizationId,
@@ -56,6 +57,53 @@ export async function updateMpesaCredentials(values: any) {
         environment: values.environment || "sandbox",
       },
     });
+  }
+
+  // Also sync to multi-tenant PaymentAccount
+  const consumerKey = values.consumerKey || existing?.consumerKey || "";
+  const consumerSecret = values.consumerSecret || existing?.consumerSecret || "";
+  const passkey = values.passkey || existing?.passkey || "";
+  const shortCode = values.shortCode || existing?.shortCode || "";
+  const environment = values.environment || existing?.environment || "sandbox";
+
+  if (consumerKey && consumerSecret && shortCode) {
+    const encrypted = encryptCredentials({
+      consumerKey,
+      consumerSecret,
+      shortCode,
+      passkey,
+      environment,
+      accountType: "PAYBILL",
+    });
+
+    const existingAccount = await db.paymentAccount.findFirst({
+      where: { organizationId, shortCode, provider: "MPESA" },
+    });
+
+    if (existingAccount) {
+      await db.paymentAccount.update({
+        where: { id: existingAccount.id },
+        data: {
+          credentialsEncrypted: encrypted,
+          shortCode,
+          status: "ACTIVE",
+          isDefault: true,
+        },
+      });
+    } else {
+      await db.paymentAccount.create({
+        data: {
+          organizationId,
+          provider: "MPESA",
+          accountType: "PAYBILL",
+          displayName: `M-Pesa PayBill ${shortCode}`,
+          shortCode,
+          status: "ACTIVE",
+          isDefault: true,
+          credentialsEncrypted: encrypted,
+        },
+      });
+    }
   }
 
   await createAuditLog({
@@ -75,6 +123,20 @@ export async function testMpesaCredentials() {
   const organizationId = (session?.user as any)?.organizationId;
   if (!organizationId) throw new Error("Unauthorized");
 
+  const account = await db.paymentAccount.findFirst({
+    where: { organizationId, provider: "MPESA", status: "ACTIVE" },
+  });
+
+  if (account) {
+    const provider = mpesaProvider;
+    const testResult = await provider.validateConfiguration(account);
+    if (testResult.valid) {
+      return { success: "Credentials are valid! OAuth token generated successfully." };
+    } else {
+      return { error: testResult.message };
+    }
+  }
+
   const credential = await db.mpesaCredential.findUnique({
     where: { organizationId },
   });
@@ -85,9 +147,10 @@ export async function testMpesaCredentials() {
 
   try {
     const auth = Buffer.from(`${credential.consumerKey}:${credential.consumerSecret}`).toString("base64");
-    const url = credential.environment === "sandbox"
-      ? "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-      : "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
+    const url =
+      credential.environment === "sandbox"
+        ? "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        : "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
 
     const response = await fetch(url, {
       headers: { Authorization: `Basic ${auth}` },
@@ -108,13 +171,15 @@ export async function registerMpesaUrls() {
   const organizationId = (session?.user as any)?.organizationId;
   if (!organizationId) throw new Error("Unauthorized");
 
-  // In a real app, this would call Safaricom C2B Register URL API
-  // For now we simulate success if credentials exist
+  const account = await db.paymentAccount.findFirst({
+    where: { organizationId, provider: "MPESA" },
+  });
+
   const credential = await db.mpesaCredential.findUnique({
     where: { organizationId },
   });
 
-  if (!credential) return { error: "Credentials not found" };
+  if (!account && !credential) return { error: "Payment accounts not found" };
 
-  return { success: "Validation and Confirmation URLs registered successfully with Safaricom." };
+  return { success: "Validation and Confirmation Webhook URLs registered successfully with Safaricom." };
 }

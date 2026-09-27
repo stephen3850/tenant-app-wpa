@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { PhoneIcon, CreditCardIcon, HistoryIcon, InfoIcon, Loader2Icon, CheckCircle2Icon, XCircleIcon } from "lucide-react";
+import { PhoneIcon, CreditCardIcon, HistoryIcon, InfoIcon, Loader2Icon, CheckCircle2Icon, XCircleIcon, Landmark } from "lucide-react";
 import { initiateMpesaPayment, getMpesaPaymentStatus } from "@/actions/tenant-payments";
 
 export function PaymentCenter({ data }: { data: any }) {
@@ -18,6 +18,16 @@ export function PaymentCenter({ data }: { data: any }) {
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' | 'info' } | null>(null);
+  const [methodsData, setMethodsData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/api/payments/methods")
+      .then((res) => res.json())
+      .then((resData) => {
+        if (!resData.error) setMethodsData(resData);
+      })
+      .catch((err) => console.error("Error loading payment methods:", err));
+  }, []);
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +40,7 @@ export function PaymentCenter({ data }: { data: any }) {
     setIsProcessing(true);
     try {
       const result = await initiateMpesaPayment(parseFloat(amount), phoneNumber);
-      if (result.ResponseCode === "0") {
+      if (result.ResponseCode === "0" && result.CheckoutRequestID) {
         setCheckoutId(result.CheckoutRequestID);
         setMessage({ text: "STK Push Sent. Please check your phone and enter your M-Pesa PIN.", type: 'info' });
         startPolling(result.CheckoutRequestID);
@@ -50,17 +60,17 @@ export function PaymentCenter({ data }: { data: any }) {
       setPollCount(count);
       try {
         const status = await getMpesaPaymentStatus(id);
-        if (status.status === "SUCCESS") {
+        if (status.status === "SUCCESS" || status.status === "COMPLETED") {
           clearInterval(interval);
           setCheckoutId(null);
           setIsProcessing(false);
           setMessage({ text: "Payment Successful! Your account has been updated.", type: 'success' });
           setTimeout(() => window.location.reload(), 3000);
-        } else if (status.status === "FAILED") {
+        } else if (status.status === "FAILED" || status.status === "CANCELLED" || status.status === "EXPIRED") {
           clearInterval(interval);
           setCheckoutId(null);
           setIsProcessing(false);
-          setMessage({ text: "Payment Failed. The transaction was cancelled or timed out.", type: 'error' });
+          setMessage({ text: "Payment Failed or Cancelled. Please try again.", type: 'error' });
         }
       } catch (err) {
         // Continue polling
@@ -159,7 +169,7 @@ export function PaymentCenter({ data }: { data: any }) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Instructions</CardTitle>
+            <CardTitle>Instructions & Payment Accounts</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-3">
@@ -169,17 +179,24 @@ export function PaymentCenter({ data }: { data: any }) {
                </p>
             </div>
             <div className="space-y-2">
-                <p className="text-xs font-bold uppercase text-muted-foreground">Other Methods</p>
-                <div className="border rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold">Bank Transfer</p>
-                    <p className="text-xs text-muted-foreground">Bank: NCBA Bank</p>
-                    <p className="text-xs text-muted-foreground">Account Name: TMS Management</p>
-                    <p className="text-xs text-muted-foreground">Account Number: 1234567890</p>
-                    <p className="text-xs text-muted-foreground font-medium">Reference: YOUR_TENANT_CODE</p>
+                <p className="text-xs font-bold uppercase text-muted-foreground">Dynamic Account Details</p>
+                <div className="border rounded-lg p-3 space-y-2 bg-slate-50">
+                    <p className="text-xs font-semibold flex items-center gap-1.5 text-slate-800">
+                      <Landmark className="h-3.5 w-3.5 text-blue-600" />
+                      {methodsData?.property?.propertyName || "Property Payment Account"}
+                    </p>
+                    {methodsData?.accounts?.[0] ? (
+                      <>
+                        <p className="text-xs text-muted-foreground">Method: {methodsData.accounts[0].displayName}</p>
+                        <p className="text-xs text-muted-foreground">Shortcode / Till: <span className="font-bold text-slate-800">{methodsData.accounts[0].shortCode}</span></p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Bank: {methodsData?.property?.bankName || "NCBA Bank"}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Account Reference: <span className="font-bold text-blue-700">{methodsData?.tenantCode || "YOUR_TENANT_CODE"}</span>
+                    </p>
                 </div>
-                <Button variant="link" className="text-xs p-0 h-auto">
-                    Submit Proof of Payment
-                </Button>
             </div>
           </CardContent>
         </Card>

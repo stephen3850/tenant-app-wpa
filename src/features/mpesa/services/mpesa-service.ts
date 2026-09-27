@@ -1,76 +1,99 @@
-import { MpesaCredential } from "@prisma/client";
-import { mpesaCredentialRepository } from "../repositories/mpesa-credential-repository";
-import { mpesaTransactionRepository } from "../repositories/mpesa-transaction-repository";
 import { STKPushInput } from "../schemas/mpesa-schemas";
+import { paymentRouter } from "@/lib/payments/router";
+import { paymentProviderFactory } from "@/lib/payments/provider-factory";
+import { db } from "@/lib/db";
+import { PaymentMethod, PaymentStatus } from "@prisma/client";
 
 export class MpesaService {
-  private async getAccessToken(credential: MpesaCredential) {
-    const auth = Buffer.from(`${credential.consumerKey}:${credential.consumerSecret}`).toString("base64");
-    const url = credential.environment === "sandbox"
-      ? "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-      : "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Basic ${auth}` },
-    });
-
-    if (!response.ok) throw new Error("Failed to get M-Pesa access token");
-    const data = await response.json();
-    return data.access_token;
-  }
-
   async initiateSTKPush(organizationId: string, input: STKPushInput) {
-    const credential = await mpesaCredentialRepository.findByOrganizationId(organizationId);
-    if (!credential) throw new Error("M-Pesa credentials not configured for this organization");
+    const invoiceId = input.invoiceIds?.[0];
 
-    const token = await this.getAccessToken(credential);
-    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
-    const password = Buffer.from(`${credential.shortCode}${credential.passkey}${timestamp}`).toString("base64");
-
-    const url = credential.environment === "sandbox"
-      ? "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-      : "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
-
-    const callbackUrl = credential.callbackUrl || `${process.env.NEXT_PUBLIC_APP_URL}/api/mpesa/stk/callback`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        BusinessShortCode: credential.shortCode,
-        Password: password,
-        Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
-        Amount: input.amount,
-        PartyA: input.phoneNumber,
-        PartyB: credential.shortCode,
-        PhoneNumber: input.phoneNumber,
-        CallBackURL: callbackUrl,
-        AccountReference: input.accountReference,
-        TransactionDesc: `Rent Payment - ${input.accountReference}`,
-      }),
+    const account = await paymentRouter.resolvePaymentAccount({
+      organizationId,
+      invoiceId,
+      paymentMethod: PaymentMethod.MPESA,
     });
 
-    const data = await response.json();
+    const pendingPayment = await db.payment.create({
+      data: {
+        organizationId,
+        tenantId: input.tenantId || "",
+        invoiceId,
+        paymentAccountId: account.id,
+        amount: input.amount,
+        method: PaymentMethod.MPESA,
+        status: PaymentStatus.PENDING,
+        notes: `STK Push via ${account.displayName}`,
+      },
+    });
 
-    if (data.ResponseCode === "0") {
-      await mpesaTransactionRepository.create({
+    const mpesaTx = await db.mpesaTransaction.create({
+      data: {
         organizationId,
         tenantId: input.tenantId,
-        merchantRequestId: data.MerchantRequestID,
-        checkoutRequestId: data.CheckoutRequestID,
+        invoiceId,
+        paymentAccountId: account.id,
+        paymentId: pendingPayment.id,
         amount: input.amount,
         phoneNumber: input.phoneNumber,
         accountReference: input.accountReference,
         status: "PENDING",
         transactionType: "STK_PUSH",
-      });
-    }
+      },
+    });
 
-    return data;
+    const provider = paymentProviderFactory.getProvider("MPESA");
+    const result = await provider.initiatePayment(
+      {
+        amount: input.amount,
+        phoneNumber: input.phoneNumber,
+        accountReference: input.accountReference,
+        paymentAccountId: account.id,
+        organizationId,
+        tenantId: input.tenantId,
+        invoiceId,
+      },
+      account
+    );
+
+    if (result.success) {
+      await db.payment.update({
+        where: { id: pendingPayment.id },
+        data: { status: PaymentStatus.STK_REQUESTED },
+      });
+
+      await db.mpesaTransaction.update({
+        where: { id: mpesaTx.id },
+        data: {
+          merchantRequestId: result.merchantRequestId,
+          checkoutRequestId: result.checkoutRequestId,
+          status: "STK_REQUESTED",
+        },
+      });
+
+      return {
+        ResponseCode: "0",
+        MerchantRequestID: result.merchantRequestId,
+        CheckoutRequestID: result.checkoutRequestId,
+        ResponseDescription: result.responseDescription,
+        CustomerMessage: result.customerMessage,
+      };
+    } else {
+      await db.payment.update({
+        where: { id: pendingPayment.id },
+        data: { status: PaymentStatus.FAILED },
+      });
+
+      await db.mpesaTransaction.update({
+        where: { id: mpesaTx.id },
+        data: { status: "FAILED", resultDesc: result.responseDescription },
+      });
+
+      return {
+        ResponseCode: "1",
+        ResponseDescription: result.responseDescription,
+      };
+    }
   }
 }
 
