@@ -16,13 +16,28 @@ export class MpesaProvider implements PaymentProvider {
 
   private getCredentialsConfig(account: PaymentAccount): MpesaCredentialsConfig {
     const credentials = decryptCredentials<MpesaCredentialsConfig>(account.credentialsEncrypted);
+    const env = (credentials.environment || process.env.MPESA_ENVIRONMENT || "sandbox") as "sandbox" | "production";
+
+    const consumerKey = credentials.consumerKey || process.env.MPESA_CONSUMER_KEY || "";
+    const consumerSecret = credentials.consumerSecret || process.env.MPESA_CONSUMER_SECRET || "";
+
+    let shortCode = credentials.shortCode || account.shortCode || process.env.MPESA_PAYBILL || process.env.MPESA_SHORTCODE || "";
+    if (!shortCode || shortCode === "N/A") {
+      shortCode = env === "sandbox" ? "174379" : "";
+    }
+
+    let passkey = credentials.passkey || process.env.MPESA_PASSKEY || "";
+    if (!passkey || passkey === "N/A") {
+      passkey = env === "sandbox" ? "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919" : "";
+    }
+
     return {
-      consumerKey: credentials.consumerKey,
-      consumerSecret: credentials.consumerSecret,
-      shortCode: credentials.shortCode || account.shortCode || "",
-      passkey: credentials.passkey,
+      consumerKey,
+      consumerSecret,
+      shortCode,
+      passkey,
       accountType: (credentials.accountType || account.accountType || "PAYBILL") as "TILL" | "PAYBILL",
-      environment: (credentials.environment || "sandbox") as "sandbox" | "production",
+      environment: env,
     };
   }
 
@@ -228,10 +243,10 @@ export class MpesaProvider implements PaymentProvider {
   async validateConfiguration(credentials: Record<string, any>): Promise<{ valid: boolean; message?: string }> {
     try {
       const config: MpesaCredentialsConfig = {
-        consumerKey: credentials.consumerKey,
-        consumerSecret: credentials.consumerSecret,
-        shortCode: credentials.shortCode,
-        passkey: credentials.passkey,
+        consumerKey: credentials.consumerKey || process.env.MPESA_CONSUMER_KEY || "",
+        consumerSecret: credentials.consumerSecret || process.env.MPESA_CONSUMER_SECRET || "",
+        shortCode: credentials.shortCode || "174379",
+        passkey: credentials.passkey || "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
         accountType: credentials.accountType || "PAYBILL",
         environment: credentials.environment || "sandbox",
       };

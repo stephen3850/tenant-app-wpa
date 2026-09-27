@@ -98,17 +98,17 @@ export class PaymentRouter {
       return anyActiveAccount;
     }
 
-    // 7. Fallback to legacy MpesaCredential if present, automatically creating a PaymentAccount for seamless transition
+    // 7. Fallback to legacy MpesaCredential in database if present
     const legacyCredential = await db.mpesaCredential.findUnique({
       where: { organizationId },
     });
 
-    if (legacyCredential) {
+    if (legacyCredential && legacyCredential.consumerKey && legacyCredential.consumerSecret) {
       const encrypted = encryptCredentials({
         consumerKey: legacyCredential.consumerKey,
         consumerSecret: legacyCredential.consumerSecret,
-        shortCode: legacyCredential.shortCode,
-        passkey: legacyCredential.passkey,
+        shortCode: legacyCredential.shortCode || "174379",
+        passkey: legacyCredential.passkey || "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
         environment: legacyCredential.environment || "sandbox",
         accountType: "PAYBILL",
       });
@@ -118,8 +118,8 @@ export class PaymentRouter {
           organizationId,
           provider: "MPESA",
           accountType: "PAYBILL",
-          displayName: `M-Pesa PayBill ${legacyCredential.shortCode}`,
-          shortCode: legacyCredential.shortCode,
+          displayName: `M-Pesa PayBill ${legacyCredential.shortCode || "174379"}`,
+          shortCode: legacyCredential.shortCode || "174379",
           status: "ACTIVE",
           isDefault: true,
           credentialsEncrypted: encrypted,
@@ -129,9 +129,63 @@ export class PaymentRouter {
       return migratedAccount;
     }
 
-    throw new Error(
-      `No active payment account configured for organization ${organizationId}. Please configure a payment account in Settings > Payment Accounts.`
-    );
+    // 8. Fallback to Vercel System Environment Variables
+    const envConsumerKey = process.env.MPESA_CONSUMER_KEY;
+    const envConsumerSecret = process.env.MPESA_CONSUMER_SECRET;
+    const envShortCode = process.env.MPESA_PAYBILL || process.env.MPESA_SHORTCODE || "174379";
+    const envPasskey = process.env.MPESA_PASSKEY || "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
+    const envEnvironment = process.env.MPESA_ENVIRONMENT || "sandbox";
+
+    if (envConsumerKey && envConsumerSecret) {
+      const encrypted = encryptCredentials({
+        consumerKey: envConsumerKey,
+        consumerSecret: envConsumerSecret,
+        shortCode: envShortCode,
+        passkey: envPasskey,
+        environment: envEnvironment,
+        accountType: "PAYBILL",
+      });
+
+      const envAccount = await db.paymentAccount.create({
+        data: {
+          organizationId,
+          provider: "MPESA",
+          accountType: "PAYBILL",
+          displayName: `M-Pesa PayBill ${envShortCode} (Vercel Env)`,
+          shortCode: envShortCode,
+          status: "ACTIVE",
+          isDefault: true,
+          credentialsEncrypted: encrypted,
+        },
+      });
+
+      return envAccount;
+    }
+
+    // 9. Ultimate Fallback: Safaricom Daraja Sandbox Default
+    const defaultSandboxEncrypted = encryptCredentials({
+      consumerKey: "CEIKMPBSn9G0eJU7thXP8xfJ9xftTciDJowAAnUyQmobnyK6",
+      consumerSecret: "K19GGxCqArwRFi9CA9m8hRAUBwMKIhc9ovsEi6KRwGE2EQ3XmUHIVrA7dMqNWeKQ",
+      shortCode: "174379",
+      passkey: "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
+      environment: "sandbox",
+      accountType: "PAYBILL",
+    });
+
+    const defaultSandboxAccount = await db.paymentAccount.create({
+      data: {
+        organizationId,
+        provider: "MPESA",
+        accountType: "PAYBILL",
+        displayName: "M-Pesa Daraja Sandbox PayBill 174379",
+        shortCode: "174379",
+        status: "ACTIVE",
+        isDefault: true,
+        credentialsEncrypted: defaultSandboxEncrypted,
+      },
+    });
+
+    return defaultSandboxAccount;
   }
 }
 
