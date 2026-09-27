@@ -29,9 +29,11 @@ import {
   Copy,
   Loader2,
   Lock,
-  UserCheck
+  UserCheck,
+  MessageSquare
 } from "lucide-react";
 import { generateTenantLoginAction } from "@/features/tenants/actions/tenant-actions";
+import { getTenantWhatsAppShareLink } from "@/lib/whatsapp";
 import { toast } from "sonner";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import {
@@ -99,6 +101,23 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
     const text = `TMS Tenant Portal Credentials:\nURL: ${window.location.origin}/login\nEmail: ${loginEmail}\nDefault Password: ${defaultPassword}`;
     navigator.clipboard.writeText(text);
     toast.success("Login credentials copied to clipboard!");
+  };
+
+  const handleSendWhatsApp = () => {
+    if (!tenant.phone) {
+      toast.error("Tenant phone number is missing.");
+      return;
+    }
+    const shareUrl = getTenantWhatsAppShareLink({
+      tenantName: `${tenant.firstName} ${tenant.lastName}`,
+      phone: tenant.phone,
+      email: tenant.user?.email || tenant.email,
+      propertyCode: property?.propertyCode,
+      unitNumber: unit?.unitNumber,
+      portalUrl: `${window.location.origin}/login`
+    });
+    window.open(shareUrl, "_blank");
+    toast.success("Opening WhatsApp with tenant credentials and login link...");
   };
 
   if (!tenant) return null;
@@ -312,6 +331,16 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
               >
                 {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Key className="h-3 w-3" />}
                 {(tenant.userId || tenant.user) ? "Reset Credentials to Phone Number" : "Generate Tenant Login"}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSendWhatsApp}
+                className="bg-[#25D366] hover:bg-[#128C7E] text-white border-none h-8 px-3.5 text-[10px] font-black rounded-lg gap-1.5 shadow-sm"
+              >
+                <MessageSquare className="h-3.5 w-3.5 text-white" />
+                Send via WhatsApp
               </Button>
 
               <Button

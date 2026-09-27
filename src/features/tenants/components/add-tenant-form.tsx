@@ -19,6 +19,7 @@ import {
 import { Calendar, Plus, ChevronRight, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { getTenantWhatsAppShareLink } from "@/lib/whatsapp";
 
 const STEPS = [
   { id: 1, title: "Tenant details", subtitle: "Name and contact." },
@@ -123,7 +124,23 @@ export function AddTenantForm({
       try {
         const result = await createFullTenantAction(formData);
         if (result.success) {
-          toast.success("Tenant added successfully with active lease.");
+          toast.success("Tenant added successfully with active lease!");
+
+          // Automatically launch WhatsApp with credentials & system link
+          if (formData.phone) {
+            try {
+              const shareUrl = getTenantWhatsAppShareLink({
+                tenantName: formData.name,
+                phone: formData.phone,
+                email: formData.email,
+                portalUrl: `${window.location.origin}/login`
+              });
+              window.open(shareUrl, "_blank");
+            } catch (wErr) {
+              console.error("WhatsApp share link error:", wErr);
+            }
+          }
+
           router.push("/tenants");
           router.refresh();
         } else {
