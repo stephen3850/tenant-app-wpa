@@ -16,6 +16,7 @@ import {
   Building as BuildingIcon
 } from "lucide-react";
 import { TenantProvider } from "@/providers/tenant-provider";
+import { LandlordMobileHeaderMenu, LandlordMobileBottomNav } from "@/components/landlord/landlord-mobile-nav";
 
 export default async function LandlordLayout({
   children,
@@ -40,15 +41,16 @@ export default async function LandlordLayout({
 
   return (
     <TenantProvider>
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex min-h-screen flex-col bg-background font-sans pb-16 lg:pb-0">
         <header className="sticky top-0 z-40 w-full border-b bg-card">
           <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-10">
+            <div className="flex items-center gap-3 lg:gap-10">
+              <LandlordMobileHeaderMenu />
               <Link href="/landlord/dashboard" className="flex items-center space-x-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#56A600] text-white shadow-sm">
                   <HomeIcon className="h-5 w-5" />
                 </div>
-                <span className="inline-block font-bold text-xl tracking-tight">TMS Owner</span>
+                <span className="inline-block font-bold text-lg sm:text-xl tracking-tight">TMS Owner</span>
               </Link>
               <nav className="hidden lg:flex gap-1">
                 {navItems.map((item) => (
@@ -62,7 +64,7 @@ export default async function LandlordLayout({
                 ))}
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
                <button className="relative p-2 text-muted-foreground hover:bg-muted rounded-xl transition-all">
                   <BellIcon className="h-5 w-5" />
                   <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-rose-500 border-2 border-background" />
@@ -76,19 +78,8 @@ export default async function LandlordLayout({
         </main>
         <Footer />
 
-        {/* Mobile Navigation */}
-        <nav className="lg:hidden sticky bottom-0 z-40 w-full border-t bg-white flex justify-around py-3 px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-            {navItems.slice(0, 5).map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex flex-col items-center text-[10px] font-bold text-slate-500 transition-colors hover:text-blue-600"
-              >
-                <item.icon className="h-5 w-5 mb-1" />
-                {item.label}
-              </Link>
-            ))}
-        </nav>
+        {/* Mobile Navigation Bottom Bar */}
+        <LandlordMobileBottomNav />
       </div>
     </TenantProvider>
   );

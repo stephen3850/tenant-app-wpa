@@ -11,12 +11,12 @@ import {
   ShieldCheck,
   Activity,
   LifeBuoy,
-  Settings,
   Building2
 } from "lucide-react";
 import { UserNav } from "@/components/shared/user-nav";
 import { Footer } from "@/components/shared/footer";
 import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
+import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 
 export default async function AdminLayout({
   children,
@@ -25,15 +25,9 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
 
-  // Basic security check for Super Admin
   if (!session?.user) {
     redirect("/login");
   }
-
-  // Assuming null organizationId or special flag marks a Super Admin
-  // if (session.user.organizationId) {
-  //   redirect("/dashboard");
-  // }
 
   const navItems = [
     { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -46,7 +40,7 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 font-sans">
       <aside className="hidden lg:flex w-72 flex-col fixed inset-y-0 z-50 bg-slate-900 text-white">
         <div className="p-8">
           <Link href="/admin/dashboard" className="flex items-center space-x-3">
@@ -85,16 +79,19 @@ export default async function AdminLayout({
 
       <div className="lg:pl-72 flex flex-col flex-1">
         <ImpersonationBanner />
-        <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-md">
-          <div className="flex h-16 items-center justify-between px-8">
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500">Super Admin Console</h2>
+        <header className="sticky top-0 z-40 w-full border-b bg-white/90 backdrop-blur-md">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-8">
+            <div className="flex items-center gap-3">
+              <AdminMobileNav />
+              <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-700">Super Admin Console</h2>
+            </div>
             <div className="flex items-center gap-4">
               <UserNav user={session.user} />
             </div>
           </div>
         </header>
 
-        <main className="p-8 flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 flex-1">
           {children}
         </main>
         <Footer className="bg-transparent border-t-0" />

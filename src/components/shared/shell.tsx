@@ -416,9 +416,9 @@ export function Shell({ children, user, organizationStatus }: ShellProps) {
         </main>
 
         {/* Live Chat Widget */}
-        <button className="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-[#56A600] px-6 py-3 text-white shadow-xl shadow-[#56A600]/30 hover:bg-[#4a8e00] transition-all active:scale-95 z-50 print:hidden">
+        <button className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex items-center gap-2 rounded-full bg-[#56A600] p-3 sm:px-6 sm:py-3 text-white shadow-xl shadow-[#56A600]/30 hover:bg-[#4a8e00] transition-all active:scale-95 z-50 print:hidden">
            <MessageSquare className="h-5 w-5" />
-           <span className="font-bold">Live Chat</span>
+           <span className="hidden sm:inline font-bold">Live Chat</span>
         </button>
       </div>
 
