@@ -21,7 +21,7 @@ export class TenantDashboardRepository {
 
     if (tenant) return tenant;
 
-    // 2. Fallback lookup by user email or phone
+    // 2. Fallback lookup by user email, phone, or name
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, phone: true, name: true, organizationId: true },
@@ -30,8 +30,29 @@ export class TenantDashboardRepository {
     if (!user) return null;
 
     const conditions: any[] = [];
-    if (user.email) conditions.push({ email: user.email });
-    if (user.phone) conditions.push({ phone: user.phone });
+    if (user.email) {
+      conditions.push({ email: { equals: user.email, mode: "insensitive" } });
+    }
+    if (user.phone) {
+      conditions.push({ phone: user.phone });
+      let cleanPhone = user.phone.replace(/\+/g, "").trim();
+      if (cleanPhone.startsWith("254")) {
+        conditions.push({ phone: "0" + cleanPhone.slice(3) });
+      } else if (cleanPhone.startsWith("0")) {
+        conditions.push({ phone: "254" + cleanPhone.slice(1) });
+      }
+    }
+    if (user.name) {
+      const parts = user.name.trim().split(" ");
+      if (parts.length >= 2) {
+        conditions.push({
+          AND: [
+            { firstName: { equals: parts[0], mode: "insensitive" } },
+            { lastName: { equals: parts[parts.length - 1], mode: "insensitive" } },
+          ],
+        });
+      }
+    }
 
     if (conditions.length > 0) {
       tenant = await db.tenant.findFirst({
@@ -62,11 +83,27 @@ export class TenantDashboardRepository {
       }
     }
 
-    // 3. Fallback: Lookup unlinked tenant in user's organization
-    if (user.organizationId) {
+    // 3. Fallback: Lookup unlinked tenant in user's organization or active default organization
+    let targetOrgId: string | undefined = user.organizationId || undefined;
+    if (!targetOrgId) {
+      const firstOrg = await db.organization.findFirst({
+        where: { status: "ACTIVE" },
+        select: { id: true },
+      });
+      targetOrgId = firstOrg?.id;
+
+      if (targetOrgId) {
+        await db.user.update({
+          where: { id: userId },
+          data: { organizationId: targetOrgId },
+        });
+      }
+    }
+
+    if (targetOrgId) {
       const orgTenant = await db.tenant.findFirst({
         where: {
-          organizationId: user.organizationId,
+          organizationId: targetOrgId,
           userId: null,
         },
         include: {
@@ -91,14 +128,14 @@ export class TenantDashboardRepository {
         return orgTenant;
       }
 
-      // 4. Auto-create tenant profile for tenant users if none exists
+      // 4. Auto-create tenant profile for this user
       const nameParts = (user.name || "Tenant User").trim().split(" ");
       const firstName = nameParts[0] || "Tenant";
       const lastName = nameParts.slice(1).join(" ") || "User";
 
       const createdTenant = await db.tenant.create({
         data: {
-          organizationId: user.organizationId,
+          organizationId: targetOrgId,
           userId: user.id,
           firstName,
           lastName,

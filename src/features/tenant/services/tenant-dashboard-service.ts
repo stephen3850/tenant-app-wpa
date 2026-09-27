@@ -9,28 +9,36 @@ export class TenantDashboardService {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
     if (!tenant) throw new Error("Tenant profile not found");
 
-    const activeLease = tenant.leases.find(l => l.status === "ACTIVE" || l.status === "EXPIRING");
+    const activeLease = tenant.leases.find((l) => l.status === "ACTIVE" || l.status === "EXPIRING");
 
     const [financial, payments, maintenance, announcements, notificationsData, documents] = await Promise.all([
-      tenantDashboardRepository.getFinancialSummary(tenant.id),
-      tenantDashboardRepository.getRecentPayments(tenant.id),
-      tenantDashboardRepository.getMaintenanceSummary(tenant.id),
-      tenantAnnouncementService.getAnnouncements(userId),
-      tenantNotificationService.getNotifications(userId, tenant.organizationId, { isArchived: false }, 5),
-      tenantDocumentRepository.getRecentDocuments(tenant.id),
+      tenantDashboardRepository
+        .getFinancialSummary(tenant.id)
+        .catch(() => ({ currentBalance: 0, creditBalance: 0, latestInvoice: null })),
+      tenantDashboardRepository.getRecentPayments(tenant.id).catch(() => []),
+      tenantDashboardRepository
+        .getMaintenanceSummary(tenant.id)
+        .catch(() => ({ open: 0, inProgress: 0, resolved: 0, closed: 0, latest: [] })),
+      tenantAnnouncementService.getAnnouncements(userId).catch(() => []),
+      tenantNotificationService
+        .getNotifications(userId, tenant.organizationId, { isArchived: false }, 5)
+        .catch(() => ({ notifications: [], total: 0 })),
+      tenantDocumentRepository.getRecentDocuments(tenant.id).catch(() => []),
     ]);
 
-    const notifications = notificationsData.notifications;
-    const unreadAnnouncements = announcements.filter(a => a.reads.length === 0);
-    const unreadNotificationsCount = await tenantNotificationService.getUnreadCount(userId, tenant.organizationId);
+    const notifications = notificationsData?.notifications || [];
+    const unreadAnnouncements = announcements.filter((a) => a?.reads?.length === 0);
+    const unreadNotificationsCount = await tenantNotificationService
+      .getUnreadCount(userId, tenant.organizationId)
+      .catch(() => 0);
 
     await createAuditLog({
       action: "DASHBOARD_VIEW",
       entity: "Tenant",
       entityId: tenant.id,
       organizationId: tenant.organizationId,
-      userId: userId
-    } as any);
+      userId: userId,
+    } as any).catch(() => {});
 
     return {
       tenant,
@@ -43,24 +51,24 @@ export class TenantDashboardService {
       documents,
       unreadCount: unreadAnnouncements.length,
       unreadNotificationsCount,
-      urgentAnnouncement: unreadAnnouncements.find(a => a.priority === 'URGENT'),
-      criticalNotification: notifications.find(n => n.priority === 'CRITICAL' && !n.readAt)
+      urgentAnnouncement: unreadAnnouncements.find((a) => a.priority === "URGENT"),
+      criticalNotification: notifications.find((n) => n.priority === "CRITICAL" && !n.readAt),
     };
   }
 
   async getLeaseDetails(userId: string) {
-     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
-     if (!tenant) throw new Error("Tenant profile not found");
+    const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
+    if (!tenant) throw new Error("Tenant profile not found");
 
-     await createAuditLog({
-        action: "LEASE_VIEW",
-        entity: "Tenant",
-        entityId: tenant.id,
-        organizationId: tenant.organizationId,
-        userId: userId
-     } as any);
+    await createAuditLog({
+      action: "LEASE_VIEW",
+      entity: "Tenant",
+      entityId: tenant.id,
+      organizationId: tenant.organizationId,
+      userId: userId,
+    } as any).catch(() => {});
 
-     return tenant.leases;
+    return tenant.leases;
   }
 }
 

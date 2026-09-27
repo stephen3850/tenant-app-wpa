@@ -13,9 +13,11 @@ export class TenantPaymentService {
     if (!tenant) throw new Error("Tenant profile not found");
 
     const [summary, recentPayments, outstandingInvoices] = await Promise.all([
-      tenantPaymentRepository.getFinancialSummary(tenant.id),
-      tenantPaymentRepository.findManyByTenantId(tenant.id, 5),
-      tenantPaymentRepository.getOutstandingInvoices(tenant.id),
+      tenantPaymentRepository
+        .getFinancialSummary(tenant.id)
+        .catch(() => ({ totalOutstanding: 0, overdueAmount: 0, latestPayment: null, countOutstanding: 0 })),
+      tenantPaymentRepository.findManyByTenantId(tenant.id, 5).catch(() => []),
+      tenantPaymentRepository.getOutstandingInvoices(tenant.id).catch(() => []),
     ]);
 
     return {
@@ -29,7 +31,7 @@ export class TenantPaymentService {
     const tenant = await tenantDashboardRepository.getTenantByUserId(userId);
     if (!tenant) throw new Error("Tenant profile not found");
 
-    return tenantPaymentRepository.findManyByTenantId(tenant.id);
+    return tenantPaymentRepository.findManyByTenantId(tenant.id).catch(() => []);
   }
 
   async initiateSTKPush(userId: string, amount: number, phoneNumber: string, invoiceId?: string) {
@@ -133,7 +135,7 @@ export class TenantPaymentService {
           account: account.displayName,
           checkoutRequestId: result.checkoutRequestId,
         },
-      } as any);
+      } as any).catch(() => {});
 
       return {
         ResponseCode: "0",
