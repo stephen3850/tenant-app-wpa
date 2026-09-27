@@ -6,18 +6,20 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { getDashboardForRole } from "@/lib/routes";
 
-// Production Auth Server Actions v2.1.5 - Verified for Neon PostgreSQL & Vercel
+// Production Auth Server Actions v2.1.6 - Verified for Neon PostgreSQL & Vercel
 
 export async function login(values: any) {
   const { email, password } = values;
 
   try {
+    const cleanEmail = email ? String(email).toLowerCase().trim() : "";
     let targetDashboard = "/portal/dashboard";
 
-    if (email) {
+    if (cleanEmail) {
       const user = await db.user.findUnique({
-        where: { email: email.toLowerCase().trim() },
+        where: { email: cleanEmail },
         include: {
+          tenantProfile: true,
           userRoles: {
             include: { role: true }
           }
@@ -25,28 +27,49 @@ export async function login(values: any) {
       });
 
       if (user) {
-        const roles = user.userRoles.map(ur => ur.role.name);
+        let roles = user.userRoles.map(ur => ur.role.name);
+
+        // Check if user is linked to a Tenant record
+        const tenantRecord = user.tenantProfile || await db.tenant.findFirst({
+          where: {
+            OR: [
+              { userId: user.id },
+              { email: { equals: cleanEmail, mode: "insensitive" } }
+            ]
+          }
+        });
+
+        if (tenantRecord && !roles.includes("TENANT")) {
+          roles.push("TENANT");
+        }
+
         targetDashboard = getDashboardForRole(roles);
       }
     }
 
-    await signIn("credentials", {
-      email,
+    const response = await signIn("credentials", {
+      email: cleanEmail,
       password,
-      redirectTo: targetDashboard,
+      redirect: false,
     });
+
+    if ((response as any)?.error) {
+      return { error: "Invalid email or password!" };
+    }
+
+    return { success: true, redirectTo: targetDashboard };
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
           return { error: "Invalid email or password!" };
         default:
-          return { error: "Something went wrong with the login process." };
+          return { error: "Authentication failed. Please check your credentials." };
       }
     }
-    // Very important: Next.js redirects work by throwing an error.
-    // We MUST re-throw it so Next.js can handle the redirect.
-    throw error;
+
+    console.error("Login Error:", error);
+    return { error: "Invalid email or password!" };
   }
 }
 
@@ -58,10 +81,12 @@ export async function register(values: any) {
       return { error: "Please fill in all required fields." };
     }
 
+    const cleanEmail = String(email).toLowerCase().trim();
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const existingUser = await db.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email: cleanEmail },
     });
 
     if (existingUser) {
@@ -96,7 +121,7 @@ export async function register(values: any) {
       const user = await tx.user.create({
         data: {
           name,
-          email: email.toLowerCase().trim(),
+          email: cleanEmail,
           password: hashedPassword,
           organizationId: org.id,
           status: "ACTIVE"

@@ -10,10 +10,13 @@ export default {
         try {
           if (!credentials?.email || !credentials?.password) return null;
 
+          const cleanEmail = (credentials.email as string).toLowerCase().trim();
+
           const user = await db.user.findUnique({
-            where: { email: credentials.email as string },
+            where: { email: cleanEmail },
             include: {
               organization: true,
+              tenantProfile: true,
               userRoles: {
                 include: {
                   role: {
@@ -38,13 +41,31 @@ export default {
           );
 
           if (passwordsMatch) {
+            let roles = user.userRoles.map(ur => ur.role.name);
+
+            // Auto-detect Tenant profile if not explicitly in userRoles
+            if (!roles.includes("TENANT")) {
+              const tenantRecord = user.tenantProfile || await db.tenant.findFirst({
+                where: {
+                  OR: [
+                    { userId: user.id },
+                    { email: { equals: cleanEmail, mode: "insensitive" } }
+                  ]
+                }
+              });
+
+              if (tenantRecord) {
+                roles.push("TENANT");
+              }
+            }
+
             return {
               id: user.id,
               email: user.email,
               name: user.name,
               organizationId: user.organizationId,
               organizationStatus: user.organization?.status || "ACTIVE",
-              roles: user.userRoles.map(ur => ur.role.name),
+              roles,
               permissions: user.userRoles.flatMap(ur =>
                 ur.role.permissions.map(p => `${p.permission.action}:${p.permission.subject}`)
               ),

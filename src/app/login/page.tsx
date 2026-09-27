@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, ArrowRight, CheckCircle2, Home } from "lucide-react";
+import { ArrowRight, CheckCircle2, Home } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -27,9 +27,10 @@ export default function LoginPage() {
 
       if (result?.error) {
         toast.error(result.error);
-      } else {
+      } else if (result?.redirectTo) {
         toast.success("Logged in successfully!");
-        // The server action handles redirect based on user role
+        router.push(result.redirectTo);
+        router.refresh();
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");

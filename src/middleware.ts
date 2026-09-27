@@ -57,10 +57,7 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (!isTenant && !isAdmin) {
-      const dest = isAdmin ? "/admin/dashboard" : isLandlord ? "/landlord/dashboard" : "/dashboard";
-      return NextResponse.redirect(new URL(dest, request.url));
-    }
+    // Authenticated users pass through to /portal where src/app/(tenant)/layout.tsx enforces DB-level tenant verification
   }
 
   // Enforce Admin Route Boundary
@@ -90,7 +87,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Prevent tenant users from accessing manager/organisation pages
-  if (isManagerPath && isTenant) {
+  if (isManagerPath && isTenant && !isAdmin) {
     return NextResponse.redirect(new URL("/portal/dashboard", request.url));
   }
 
