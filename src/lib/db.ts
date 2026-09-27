@@ -1,15 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { PrismaNeon } from '@prisma/adapter-neon';
-import ws from 'ws';
 
 declare global {
   var prisma: PrismaClient | undefined;
-}
-
-// Enable WebSocket for edge-compatibility in Node.js
-if (typeof globalThis.WebSocket === 'undefined') {
-  neonConfig.webSocketConstructor = ws;
 }
 
 const isValidPostgresUrl = (str: string): boolean => {
@@ -77,21 +69,8 @@ const createPrismaClient = () => {
   }
 
   try {
-    const pool = new Pool({
-      connectionString: connectionString,
-      max: 2,
-      connectionTimeoutMillis: 10000,
-      ssl: true
-    });
-
-    pool.on('error', (err) => {
-      console.error('Unexpected error on idle database client', err);
-    });
-
-    const adapter = new PrismaNeon(pool as any);
-
     return new PrismaClient({
-      adapter,
+      datasourceUrl: connectionString,
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
     });
   } catch (err: any) {
