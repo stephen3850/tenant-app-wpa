@@ -162,15 +162,30 @@ export class PaymentRouter {
       return envAccount;
     }
 
-    // 9. Ultimate Fallback: Safaricom Daraja Sandbox Default
+    // 9. Ultimate Fallback: Safaricom Daraja Sandbox Default using Tenant App Credentials
     const defaultSandboxEncrypted = encryptCredentials({
-      consumerKey: "CEIKMPBSn9G0eJU7thXP8xfJ9xftTciDJowAAnUyQmobnyK6",
-      consumerSecret: "K19GGxCqArwRFi9CA9m8hRAUBwMKIhc9ovsEi6KRwGE2EQ3XmUHIVrA7dMqNWeKQ",
+      consumerKey: "7gAhFod0HBxFCsf1fWINXDBTXpF3cmE89iiSYD44HpbE5A94",
+      consumerSecret: "0fQciSsQRhp7uGFjqjpKZw1bLQ3BbNsa3PRR0D49ziqfAGVDQorUtJQG8IGTaWhj",
       shortCode: "174379",
       passkey: "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
       environment: "sandbox",
       accountType: "PAYBILL",
     });
+
+    const existing174379 = await db.paymentAccount.findFirst({
+      where: { organizationId, shortCode: "174379", provider: "MPESA" },
+    });
+
+    if (existing174379) {
+      return await db.paymentAccount.update({
+        where: { id: existing174379.id },
+        data: {
+          credentialsEncrypted: defaultSandboxEncrypted,
+          status: "ACTIVE",
+          isDefault: true,
+        },
+      });
+    }
 
     const defaultSandboxAccount = await db.paymentAccount.create({
       data: {
