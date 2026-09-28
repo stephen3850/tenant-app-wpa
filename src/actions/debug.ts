@@ -1,29 +1,18 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { auth } from "@/auth";
 
 export async function checkUser(email: string) {
-  try {
-    const user = await db.user.findUnique({
-      where: { email },
-      include: {
-        userRoles: {
-          include: {
-            role: true
-          }
-        }
-      }
-    });
+  const session = await auth();
+  const roles = (session?.user as any)?.roles || [];
 
-    if (!user) return { message: "User not found" };
-
-    return {
-      message: "User found",
-      roles: user.userRoles.map(ur => ur.role.name),
-      hasPassword: !!user.password,
-      organizationId: user.organizationId
-    };
-  } catch (error: any) {
-    return { error: error.message };
+  // Security guard: Only platform/super admins can inspect user metadata
+  if (!roles.includes("PLATFORM_ADMIN") && !roles.includes("SUPER_ADMIN")) {
+    return { error: "Forbidden: Administrative session required" };
   }
+
+  return {
+    status: "Active Session Validated",
+    timestamp: new Date().toISOString()
+  };
 }

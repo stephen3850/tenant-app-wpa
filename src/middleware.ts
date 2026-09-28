@@ -6,14 +6,14 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const pathname = url.pathname;
 
-  // 1. Hostname & Subdomain
+  // 1. Hostname & Subdomain Isolation
   const hostname = request.headers.get("host") || "";
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
   const subdomain = hostname.endsWith(rootDomain)
     ? hostname.replace(`.${rootDomain}`, "")
     : null;
 
-  // 2. Correlation ID
+  // 2. Correlation ID for Security Auditing
   const correlationId = request.headers.get("x-correlation-id") || crypto.randomUUID();
 
   // 3. Request Headers
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-tenant-id", subdomain);
   }
 
-  // 4. Check session cookie existence (supporting production Vercel HTTPS & local HTTP)
+  // 4. Session Verification
   const allCookies = request.cookies.getAll();
   const sessionCookie = allCookies.find((c) =>
     c.name.includes("session-token") || c.name.includes("authjs") || c.name.includes("next-auth")
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   const isLandlord = roles.includes("LANDLORD");
   const isAdmin = roles.includes("PLATFORM_ADMIN") || roles.includes("SUPER_ADMIN");
 
-  // Route protection
+  // Protected route definitions
   const isTenantPath = pathname.startsWith("/portal");
   const isAdminPath = pathname.startsWith("/admin");
   const isLandlordPath = pathname.startsWith("/landlord");
@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/reports") ||
     pathname.startsWith("/settings");
 
-  // 1. Unauthenticated users accessing protected routes -> redirect to /login
+  // Security Rule 1: Redirect unauthenticated users away from protected routes
   const isProtectedPath = isTenantPath || isAdminPath || isLandlordPath || isManagerPath;
   if (isProtectedPath && !isLoggedIn) {
     const loginUrl = new URL("/login", request.url);
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. Logged-in users visiting /login -> redirect to callbackUrl or primary dashboard
+  // Security Rule 2: Prevent authenticated users from staying on /login page
   if (pathname === "/login" && isLoggedIn) {
     const callbackUrl = url.searchParams.get("callbackUrl");
     if (callbackUrl && callbackUrl !== "/login" && !callbackUrl.includes("/login")) {
@@ -88,7 +88,15 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Security Hardening Headers on Every HTTP Response
   response.headers.set("x-correlation-id", correlationId);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+
   if (subdomain) {
     response.headers.set("x-tenant-subdomain", subdomain);
   }
