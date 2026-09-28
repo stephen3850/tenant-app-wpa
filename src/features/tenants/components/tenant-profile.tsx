@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,12 @@ import {
   FileText,
   TrendingUp,
   AlertCircle,
-  FileMinus,
-  FolderOpen,
   Pencil,
   Trash2,
   Copy,
   Loader2,
-  Lock,
-  UserCheck,
-  MessageSquare
+  MessageSquare,
+  FolderOpen
 } from "lucide-react";
 import { generateTenantLoginAction } from "@/features/tenants/actions/tenant-actions";
 import { getTenantWhatsAppShareLink } from "@/lib/whatsapp";
@@ -72,12 +69,17 @@ interface TenantProfileProps {
 }
 
 export function TenantProfile({ tenant }: TenantProfileProps) {
-  const [isUploadOpen, setIsUploadOpen] = React.useState(false);
-  const [isPaymentOpen, setIsPaymentOpen] = React.useState(false);
-  const [isLeaseOpen, setIsLeaseOpen] = React.useState(false);
-  const [isAssignOpen, setIsAssignOpen] = React.useState(false);
-  const [selectedInvoice, setSelectedInvoice] = React.useState<any>(null);
-  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isLeaseOpen, setIsLeaseOpen] = useState(false);
+  const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleGenerateLogin = async () => {
     setIsGenerating(true);
@@ -96,25 +98,29 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
   };
 
   const handleCopyCredentials = () => {
+    if (typeof window === "undefined") return;
+    const origin = window.location.origin;
     const loginEmail = tenant.user?.email || tenant.email || "No email assigned";
     const defaultPassword = tenant.phone || "Phone number";
-    const text = `TMS Tenant Portal Credentials:\nURL: ${window.location.origin}/login\nEmail: ${loginEmail}\nDefault Password: ${defaultPassword}`;
+    const text = `TMS Tenant Portal Credentials:\nURL: ${origin}/login\nEmail: ${loginEmail}\nDefault Password: ${defaultPassword}`;
     navigator.clipboard.writeText(text);
     toast.success("Login credentials copied to clipboard!");
   };
 
   const handleSendWhatsApp = () => {
+    if (typeof window === "undefined") return;
     if (!tenant.phone) {
       toast.error("Tenant phone number is missing.");
       return;
     }
+    const origin = window.location.origin;
     const shareUrl = getTenantWhatsAppShareLink({
       tenantName: `${tenant.firstName} ${tenant.lastName}`,
       phone: tenant.phone,
       email: tenant.user?.email || tenant.email,
       propertyCode: property?.propertyCode,
       unitNumber: unit?.unitNumber,
-      portalUrl: `${window.location.origin}/login`
+      portalUrl: `${origin}/login`
     });
     window.open(shareUrl, "_blank");
     toast.success("Opening WhatsApp with tenant credentials and login link...");
@@ -360,7 +366,7 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
               asChild
               className="bg-[#059669] hover:bg-[#047857] text-white border-none h-8 px-4 text-[10px] font-black rounded-lg shadow-sm gap-1.5"
             >
-              <Link href="/portal" target="_blank">
+              <Link href="/portal/dashboard" target="_blank">
                 <UserCircle className="h-3.5 w-3.5" />
                 Login as Tenant (Preview Portal)
               </Link>
@@ -485,8 +491,8 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
                 {tenant.leases?.map((lease: any, index: number) => (
                   <TableRow key={lease.id} className="border-slate-100 h-10 hover:bg-slate-50/50 transition-colors">
                     <TableCell className="py-1 px-3 text-[9px] font-bold text-slate-400">{index + 1}</TableCell>
-                    <TableCell className="py-1 text-[10px] font-black text-slate-800">{lease.unit.property.propertyName}</TableCell>
-                    <TableCell className="py-1 text-[10px] font-black text-emerald-700">{lease.unit.unitNumber}</TableCell>
+                    <TableCell className="py-1 text-[10px] font-black text-slate-800">{lease.unit?.property?.propertyName || "N/A"}</TableCell>
+                    <TableCell className="py-1 text-[10px] font-black text-emerald-700">{lease.unit?.unitNumber || "N/A"}</TableCell>
                     <TableCell className="py-1">
                       <Badge className={cn(
                         "rounded-full px-1.5 py-0 h-3.5 border-none text-[7px] font-black uppercase",
@@ -595,7 +601,7 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
                                 </Badge>
                              </TableCell>
                              <TableCell className="py-1 text-[10px] font-black text-slate-900">{formatCurrency(inv.totalAmount)}</TableCell>
-                             <TableCell className="py-1 text-[10px] font-black text-slate-700">{unit?.unitNumber}</TableCell>
+                             <TableCell className="py-1 text-[10px] font-black text-slate-700">{unit?.unitNumber || "N/A"}</TableCell>
                              <TableCell className="py-1 px-4 text-right">
                                 <div className="flex justify-end gap-1.5">
                                    <Button variant="outline" size="sm" className="h-6 px-2 text-[8px] font-black rounded-lg border-slate-200 hover:bg-slate-100" asChild>
@@ -654,42 +660,46 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
                  </CardHeader>
                  <CardContent className="p-4 pt-4">
                     <div className="h-[180px] w-full">
-                       <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={chartData}>
-                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                             <XAxis
-                                dataKey="month"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{fontSize: 8, fill: '#64748b', fontWeight: 800}}
-                                dy={10}
-                             />
-                             <YAxis
-                                yAxisId="left"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{fontSize: 8, fill: '#64748b', fontWeight: 800}}
-                             />
-                             <Tooltip
-                                contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }}
-                             />
-                             <Bar yAxisId="left" dataKey="rentPaid" fill="#059669" radius={[2, 2, 0, 0]} barSize={14} />
-                             <Area
-                                yAxisId="left"
-                                type="monotone"
-                                dataKey="balance"
-                                stroke="#dc2626"
-                                fill="url(#colorBalance)"
-                                strokeWidth={2}
-                             />
-                             <defs>
-                                <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                                   <stop offset="5%" stopColor="#dc2626" stopOpacity={0.15}/>
-                                   <stop offset="95%" stopColor="#dc2626" stopOpacity={0}/>
-                                </linearGradient>
-                             </defs>
-                          </ComposedChart>
-                       </ResponsiveContainer>
+                       {isMounted ? (
+                         <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={chartData}>
+                               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                               <XAxis
+                                  dataKey="month"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{fontSize: 8, fill: '#64748b', fontWeight: 800}}
+                                  dy={10}
+                               />
+                               <YAxis
+                                  yAxisId="left"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{fontSize: 8, fill: '#64748b', fontWeight: 800}}
+                               />
+                               <Tooltip
+                                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }}
+                               />
+                               <Bar yAxisId="left" dataKey="rentPaid" fill="#059669" radius={[2, 2, 0, 0]} barSize={14} />
+                               <Area
+                                  yAxisId="left"
+                                  type="monotone"
+                                  dataKey="balance"
+                                  stroke="#dc2626"
+                                  fill="url(#colorBalance)"
+                                  strokeWidth={2}
+                               />
+                               <defs>
+                                  <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                                     <stop offset="5%" stopColor="#dc2626" stopOpacity={0.15}/>
+                                     <stop offset="95%" stopColor="#dc2626" stopOpacity={0}/>
+                                  </linearGradient>
+                               </defs>
+                            </ComposedChart>
+                         </ResponsiveContainer>
+                       ) : (
+                         <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
+                       )}
                     </div>
                  </CardContent>
               </Card>
@@ -734,12 +744,39 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
               <Card className="lg:col-span-2 shadow-sm border-slate-200 overflow-hidden">
                  <CardHeader className="flex flex-row items-center justify-between py-2.5 px-4 border-b border-slate-100 bg-slate-50/30">
                     <CardTitle className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Recent Documents</CardTitle>
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">0 total</span>
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{tenant.documents?.length || 0} total</span>
                  </CardHeader>
                  <CardContent className="p-0">
-                    <div className="flex items-center justify-center py-14">
-                       <p className="text-[10px] font-bold text-slate-400 italic">No documents are linked to this tenant profile yet.</p>
-                    </div>
+                    {tenant.documents && tenant.documents.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50/50 border-none h-8">
+                            <TableHead className="text-[8px] font-black uppercase tracking-wider text-slate-500 py-0 px-4">Name</TableHead>
+                            <TableHead className="text-[8px] font-black uppercase tracking-wider text-slate-500 py-0">Category</TableHead>
+                            <TableHead className="text-[8px] font-black uppercase tracking-wider text-slate-500 py-0">Date</TableHead>
+                            <TableHead className="text-right text-[8px] font-black uppercase tracking-wider text-slate-500 py-0 px-4">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {tenant.documents.slice(0, 5).map((doc: any) => (
+                            <TableRow key={doc.id} className="h-10 border-slate-100 hover:bg-slate-50/50 transition-colors">
+                              <TableCell className="py-1 px-4 text-[10px] font-black text-slate-900">{doc.name}</TableCell>
+                              <TableCell className="py-1 text-[10px] font-bold text-slate-600 uppercase">{doc.category?.replace(/_/g, " ") || "GENERAL"}</TableCell>
+                              <TableCell className="py-1 text-[10px] font-bold text-slate-500">{formatDate(doc.createdAt)}</TableCell>
+                              <TableCell className="py-1 px-4 text-right">
+                                <Button variant="ghost" size="sm" className="h-6 px-2 text-[8px] font-black text-blue-600 hover:bg-blue-50" onClick={() => window.open(doc.url, "_blank")}>
+                                  View
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="flex items-center justify-center py-14">
+                         <p className="text-[10px] font-bold text-slate-400 italic">No documents are linked to this tenant profile yet.</p>
+                      </div>
+                    )}
                  </CardContent>
               </Card>
 
@@ -750,8 +787,8 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
                  </CardHeader>
                  <CardContent className="p-3.5 space-y-2.5">
                     {[
-                       { label: "TOTAL DOCUMENTS", value: "0", color: "text-slate-950" },
-                       { label: "SCREENING / ID", value: "0", color: "text-emerald-700" },
+                       { label: "TOTAL DOCUMENTS", value: (tenant.documents?.length || 0).toString(), color: "text-slate-950" },
+                       { label: "SCREENING / ID", value: (tenant.documents?.filter((d: any) => d.category === "MOVE_IN_DOCUMENT" || d.category === "TENANT_ID")?.length || 0).toString(), color: "text-emerald-700" },
                     ].map((item, i) => (
                        <div key={i} className="p-3 border border-slate-100 rounded-lg space-y-0.5 bg-white shadow-sm ring-1 ring-slate-50">
                           <p className="text-[7px] font-black text-slate-400 uppercase leading-none">{item.label}</p>
@@ -760,7 +797,9 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
                     ))}
                     <div className="p-3 border border-slate-100 rounded-lg space-y-1 bg-white shadow-sm ring-1 ring-slate-50">
                        <p className="text-[7px] font-black text-slate-400 uppercase leading-none">LATEST UPLOAD</p>
-                       <p className="text-[9px] font-bold text-slate-500 italic leading-none pt-1">No uploads yet</p>
+                       <p className="text-[9px] font-bold text-slate-500 italic leading-none pt-1">
+                          {tenant.documents?.[0] ? formatDate(tenant.documents[0].createdAt) : "No uploads yet"}
+                       </p>
                     </div>
                  </CardContent>
               </Card>

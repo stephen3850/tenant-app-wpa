@@ -14,11 +14,16 @@ export function formatCurrency(amount: number | string | any) {
 }
 
 export function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(date));
+  if (!date) return "N/A";
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(date));
+  } catch {
+    return "N/A";
+  }
 }
 
 export function slugify(text: string) {
@@ -32,43 +37,21 @@ export function slugify(text: string) {
 }
 
 /**
- * Recursively converts Prisma Decimal objects to numbers and ensures
- * the object is a plain object that can be passed from Server to Client Components.
+ * Recursively converts Prisma Decimal objects, BigInts, and Dates to a plain,
+ * serializable object that can safely cross the Server-to-Client Component boundary in Next.js 15.
  */
 export function serialize<T>(obj: T): T {
   if (obj === null || obj === undefined) {
     return obj;
   }
-
-  // Handle Prisma.Decimal (decimal.js)
-  // These objects have d, e, s properties and a toJSON method
-  if (
-    typeof obj === "object" &&
-    (obj as any).constructor &&
-    ((obj as any).constructor.name === "Decimal" || (obj as any).d !== undefined) &&
-    (obj as any).toNumber
-  ) {
-    return (obj as any).toNumber();
+  try {
+    return JSON.parse(
+      JSON.stringify(obj, (key, value) => {
+        if (typeof value === "bigint") return value.toString();
+        return value;
+      })
+    );
+  } catch {
+    return obj;
   }
-
-  // Handle Dates
-  if (obj instanceof Date) {
-    return obj as any;
-  }
-
-  // Handle Arrays
-  if (Array.isArray(obj)) {
-    return obj.map((item) => serialize(item)) as any;
-  }
-
-  // Handle Objects
-  if (typeof obj === "object") {
-    const result: any = {};
-    for (const [key, value] of Object.entries(obj)) {
-      result[key] = serialize(value);
-    }
-    return result;
-  }
-
-  return obj;
 }
