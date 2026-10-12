@@ -25,14 +25,20 @@ export async function createUnit(propertyId: string, values: any) {
   const tenantDb = getTenantDb(organizationId);
 
   // Verify property belongs to organization
-  const property = await tenantDb.property.findUnique({ where: { id: propertyId } });
+  const property = await tenantDb.property.findUnique({ where: { id: propertyId }, select: { id: true, propertyCode: true } });
   if (!property) throw new Error("Property not found");
+
+  const prefix = property.propertyCode || "UNT";
+  const cleanNum = (values.unitNumber || "1").toString().trim();
+  const userCode = values.unitCode && typeof values.unitCode === "string" && values.unitCode.trim() !== "" ? values.unitCode.trim() : null;
+  const unitCode = userCode || `${prefix}-${cleanNum}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
 
   const unit = await tenantDb.unit.create({
     data: {
-      unitNumber: values.unitNumber,
-      unitType: values.type || values.unitType,
-      monthlyRent: values.rentAmount || values.monthlyRent,
+      unitNumber: cleanNum,
+      unitCode: unitCode,
+      unitType: values.type || values.unitType || "Standard",
+      monthlyRent: values.rentAmount || values.monthlyRent || 0,
       securityDeposit: values.securityDeposit || 0,
       status: values.status || "ACTIVE",
       occupancyStatus: values.occupancyStatus || "VACANT",
@@ -59,16 +65,22 @@ export async function updateUnit(id: string, values: any) {
   const oldData = await tenantDb.unit.findUnique({ where: { id } });
   if (!oldData) throw new Error("Unit not found");
 
+  const updateData: any = {
+    unitNumber: values.unitNumber,
+    unitType: values.type || values.unitType,
+    monthlyRent: values.rentAmount || values.monthlyRent,
+    securityDeposit: values.securityDeposit,
+    status: values.status,
+    occupancyStatus: values.occupancyStatus,
+  };
+
+  if (values.unitCode && typeof values.unitCode === "string" && values.unitCode.trim() !== "") {
+    updateData.unitCode = values.unitCode.trim();
+  }
+
   const updated = await tenantDb.unit.update({
     where: { id },
-    data: {
-      unitNumber: values.unitNumber,
-      unitType: values.type || values.unitType,
-      monthlyRent: values.rentAmount || values.monthlyRent,
-      securityDeposit: values.securityDeposit,
-      status: values.status,
-      occupancyStatus: values.occupancyStatus,
-    },
+    data: updateData,
   });
 
   await createAuditLog({

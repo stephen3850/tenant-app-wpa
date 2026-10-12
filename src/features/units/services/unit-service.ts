@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { createAuditLog } from "@/lib/audit";
 import { UnitFormValues, UnitFilters } from "../schemas/unit-schema";
 import { OccupancyStatus, UnitStatus, Prisma } from "@prisma/client";
+import { db } from "@/lib/db";
 
 export class UnitService {
   private async getSession() {
@@ -30,15 +31,31 @@ export class UnitService {
     const user = await this.getSession();
     await checkPermission("create", "unit");
 
-    const formattedUnits = units.map(u => ({
-      ...u,
-      propertyId,
-      monthlyRent: new Prisma.Decimal(u.monthlyRent || 0),
-      securityDeposit: new Prisma.Decimal(u.securityDeposit || 0),
-      serviceCharge: new Prisma.Decimal(u.serviceCharge || 0),
-      status: UnitStatus.ACTIVE,
-      occupancyStatus: OccupancyStatus.VACANT,
-    }));
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+      select: { propertyCode: true }
+    });
+    const prefix = property?.propertyCode || "UNT";
+
+    const formattedUnits = units.map((u, idx) => {
+      const cleanNum = (u.unitNumber || `U${idx + 1}`).toString().trim();
+      const userCode = u.unitCode && typeof u.unitCode === "string" && u.unitCode.trim() !== "" ? u.unitCode.trim() : null;
+      const code = userCode || `${prefix}-${cleanNum}-${Date.now().toString(36)}-${idx}${Math.random().toString(36).substring(2, 5)}`;
+
+      return {
+        unitNumber: cleanNum,
+        unitCode: code,
+        unitType: u.unitType || "Standard",
+        block: u.block || null,
+        floor: u.floor || null,
+        propertyId,
+        monthlyRent: new Prisma.Decimal(u.monthlyRent || 0),
+        securityDeposit: new Prisma.Decimal(u.securityDeposit || 0),
+        serviceCharge: new Prisma.Decimal(u.serviceCharge || 0),
+        status: UnitStatus.ACTIVE,
+        occupancyStatus: OccupancyStatus.VACANT,
+      };
+    });
 
     const result = await unitRepository.createMany(formattedUnits);
 
@@ -56,20 +73,30 @@ export class UnitService {
     const user = await this.getSession();
     await checkPermission("create", "unit");
 
+    const property = await db.property.findUnique({
+      where: { id: values.propertyId },
+      select: { propertyCode: true }
+    });
+    const prefix = property?.propertyCode || "UNT";
+
+    const cleanNum = (values.unitNumber || "1").toString().trim();
+    const userCode = values.unitCode && typeof values.unitCode === "string" && values.unitCode.trim() !== "" ? values.unitCode.trim() : null;
+    const unitCode = userCode || `${prefix}-${cleanNum}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+
     const unit = await unitRepository.create({
-      unitNumber: values.unitNumber,
-      unitCode: values.unitCode,
+      unitNumber: cleanNum,
+      unitCode: unitCode,
       unitType: values.unitType,
-      block: values.block,
-      floor: values.floor,
+      block: values.block || null,
+      floor: values.floor || null,
       monthlyRent: values.monthlyRent,
       securityDeposit: values.securityDeposit,
       serviceCharge: values.serviceCharge,
       bedrooms: values.bedrooms,
       bathrooms: values.bathrooms,
       squareFootage: values.squareFootage,
-      occupancyStatus: values.occupancyStatus,
-      status: values.status,
+      occupancyStatus: values.occupancyStatus || OccupancyStatus.VACANT,
+      status: values.status || UnitStatus.ACTIVE,
       property: { connect: { id: values.propertyId } },
     });
 
@@ -90,7 +117,12 @@ export class UnitService {
     const oldData = await unitRepository.findById(id, user.organizationId);
     if (!oldData) throw new Error("Unit not found");
 
-    const updated = await unitRepository.update(id, user.organizationId, values as any);
+    const updateData: any = { ...values };
+    if (updateData.unitCode === "") {
+      delete updateData.unitCode;
+    }
+
+    const updated = await unitRepository.update(id, user.organizationId, updateData);
 
     await createAuditLog({
       action: "UPDATE",
@@ -108,7 +140,6 @@ export class UnitService {
     await checkPermission("delete", "unit");
 
     const oldData = await unitRepository.findById(id, user.organizationId);
-    // Archive only sets status to INACTIVE
     const updated = await unitRepository.archive(id, user.organizationId);
 
     await createAuditLog({
@@ -127,7 +158,6 @@ export class UnitService {
     await checkPermission("delete", "unit");
 
     const oldData = await unitRepository.findById(id, user.organizationId);
-    // Permanent delete sets deletedAt
     const updated = await unitRepository.softDelete(id, user.organizationId);
 
     await createAuditLog({

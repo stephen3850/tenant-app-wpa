@@ -16,7 +16,6 @@ export class UnitRepository {
       if (filters.propertyId) where.propertyId = filters.propertyId;
       if (filters.unitType) where.unitType = filters.unitType;
       if (filters.occupancyStatus) where.occupancyStatus = filters.occupancyStatus;
-      // status already handled above or can be overridden
 
       if (filters.minRent || filters.maxRent) {
         where.monthlyRent = {
@@ -83,14 +82,25 @@ export class UnitRepository {
   }
 
   async create(data: Prisma.UnitCreateInput) {
+    const createData = { ...data };
+    if ((createData as any).unitCode === "") {
+      delete (createData as any).unitCode;
+    }
     return db.unit.create({
-      data,
+      data: createData,
     });
   }
 
   async createMany(data: Prisma.UnitCreateManyInput[]) {
+    const sanitizedData = data.map(item => {
+      if (item.unitCode === "") {
+        const { unitCode, ...rest } = item;
+        return rest;
+      }
+      return item;
+    });
     return db.unit.createMany({
-      data,
+      data: sanitizedData,
     });
   }
 
@@ -102,9 +112,14 @@ export class UnitRepository {
 
     if (!unit) throw new Error("Unit not found or unauthorized");
 
+    const updateData = { ...data };
+    if ((updateData as any).unitCode === "") {
+      delete (updateData as any).unitCode;
+    }
+
     return db.unit.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 
